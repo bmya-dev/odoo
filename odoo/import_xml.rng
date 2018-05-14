@@ -6,6 +6,17 @@
         <rng:optional><rng:attribute name="context" /></rng:optional>
     </rng:define>
 
+    <rng:define name="external_id">
+        <rng:data type="string">
+            <rng:param name="pattern">.+</rng:param>
+        </rng:data>
+    </rng:define>
+    <rng:define name="views">
+        <rng:data type="string">
+            <rng:param name="pattern">([a-z]+(,[a-z]+)*)?</rng:param>
+        </rng:data>
+    </rng:define>
+
     <rng:define name="any">
         <rng:element>
             <rng:anyName/>
@@ -61,7 +72,11 @@
 
     <rng:define name="report">
         <rng:element name="report">
-            <rng:optional><rng:attribute name="id"/></rng:optional>
+            <rng:optional>
+                <rng:attribute name="id">
+                    <rng:ref name="external_id"/>
+                </rng:attribute>
+            </rng:optional>
             <rng:attribute name="string"/>
             <rng:attribute name="model"/>
             <rng:attribute name="name"/>
@@ -162,7 +177,9 @@
     <rng:define name="record">
         <rng:element name="record">
             <rng:optional>
-                <rng:attribute name="id" />
+                <rng:attribute name="id">
+                    <rng:ref name="external_id"/>
+                </rng:attribute>
                 <rng:optional>
                     <rng:attribute name="forcecreate" />
                 </rng:optional>
@@ -177,7 +194,7 @@
 
     <rng:define name="template">
         <rng:element name="template">
-            <rng:optional><rng:attribute name="id"/></rng:optional>
+            <rng:optional><rng:attribute name="id"><rng:ref name="external_id"/></rng:attribute></rng:optional>
             <rng:optional><rng:attribute name="t-name"/></rng:optional>
             <rng:optional><rng:attribute name="name"/></rng:optional>
             <rng:optional><rng:attribute name="forcecreate"/></rng:optional>
@@ -187,7 +204,7 @@
             <rng:optional><rng:attribute name="website_id"/></rng:optional>
             <rng:group>
                 <rng:optional>
-                    <rng:attribute name="inherit_id"/>
+                    <rng:attribute name="inherit_id"><rng:ref name="external_id"/></rng:attribute>
                     <rng:optional>
                         <rng:attribute name="primary">
                             <rng:value>True</rng:value>
@@ -195,8 +212,8 @@
                     </rng:optional>
                 </rng:optional>
                 <rng:optional><rng:attribute name="groups"/></rng:optional>
-                <rng:optional><rng:attribute name="active"></rng:attribute></rng:optional>
-                <rng:optional><rng:attribute name="customize_show"></rng:attribute></rng:optional>
+                <rng:optional><rng:attribute name="active"/></rng:optional>
+                <rng:optional><rng:attribute name="customize_show"/></rng:optional>
             </rng:group>
             <rng:zeroOrMore>
                 <rng:choice>
@@ -211,7 +228,7 @@
         <rng:element name="delete">
             <rng:attribute name="model" />
             <rng:choice>
-                <rng:attribute name="id" />
+                <rng:attribute name="id"><rng:ref name="external_id"/></rng:attribute>
                 <rng:attribute name="search" />
             </rng:choice>
         </rng:element>
@@ -220,7 +237,7 @@
     <rng:define name="menuitem">
         <rng:element name="menuitem">
             <!-- TODO: id should probably be mandatory -->
-            <rng:optional> <rng:attribute name="id" /></rng:optional>
+            <rng:optional> <rng:attribute name="id" ><rng:ref name="external_id"/></rng:attribute></rng:optional>
             <rng:optional> <rng:attribute name="name"/></rng:optional>
             <rng:optional> <rng:attribute name="parent"/> </rng:optional>
             <rng:optional> <rng:attribute name="action"/> </rng:optional>
@@ -239,22 +256,53 @@
 
     <rng:define name="act_window">
         <rng:element name="act_window">
-            <rng:attribute name="id" />
+            <rng:attribute name="id"><rng:ref name="external_id"/></rng:attribute>
             <rng:attribute name="name" />
             <rng:attribute name="res_model" />
             <rng:optional><rng:attribute name="domain" /> </rng:optional>
-            <rng:optional><rng:attribute name="src_model" /></rng:optional>
             <rng:optional><rng:attribute name="context" /></rng:optional>
-            <rng:optional> <rng:attribute name="view_id"/> </rng:optional>
-            <rng:optional> <rng:attribute name="view_type"/> </rng:optional>
+            <rng:optional> <rng:attribute name="view_id"><rng:ref name="external_id"/></rng:attribute> </rng:optional>
+            <rng:optional><rng:attribute name="view_type"><rng:ref name="views"/></rng:attribute></rng:optional>
             <rng:optional> <rng:attribute name="view_mode"/> </rng:optional>
-            <rng:optional> <rng:attribute name="multi"/> </rng:optional>
-            <rng:optional> <rng:attribute name="target"/> </rng:optional>
-            <rng:optional> <rng:attribute name="key2"/> </rng:optional>
             <rng:optional> <rng:attribute name="groups"/> </rng:optional>
             <rng:optional> <rng:attribute name="limit"/> </rng:optional>
             <rng:optional> <rng:attribute name="usage"/> </rng:optional>
-            <rng:optional> <rng:attribute name="auto_refresh"/> </rng:optional>
+            <rng:optional>
+                <rng:attribute name="target">
+                    <rng:choice>
+                        <rng:value>current</rng:value>
+                        <rng:value>new</rng:value>
+                        <rng:value>inline</rng:value>
+                        <rng:value>fullscreen</rng:value>
+                    </rng:choice>
+                </rng:attribute>
+            </rng:optional>
+
+            <!--
+            Bindings: link allowing an action to be present in the action menus of a model
+
+            * binding_model = name of the target model on which this action
+              is available
+            * binding_type = either "action" or "report", specific menu in
+              which the action will appear
+            * binding_views = views for which this action will appear
+            -->
+            <rng:optional>
+                <rng:attribute name="binding_model"/>
+                <rng:optional>
+                    <rng:attribute name="binding_views">
+                        <rng:ref name="views"/>
+                    </rng:attribute>
+                </rng:optional>
+                <rng:optional>
+                    <rng:attribute name="binding_type">
+                        <rng:choice>
+                            <rng:value>action</rng:value>
+                            <rng:value>report</rng:value>
+                        </rng:choice>
+                    </rng:attribute>
+                </rng:optional>
+            </rng:optional>
             <rng:empty />
         </rng:element>
     </rng:define>
