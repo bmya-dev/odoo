@@ -8,7 +8,7 @@ var assetsLoaded = false;
 var WysiwygRoot = Widget.extend({
     assetLibs: ['web_editor.compiled_assets_wysiwyg'],
 
-    publicMethods: ['isDirty', 'save', 'getValue', 'setValue', 'getEditable', 'on', 'trigger', 'focus'],
+    publicMethods: ['isDirty', 'save', 'getValue', 'setValue', 'on', 'trigger', 'focus'],
 
     /**
      *   @see 'web_editor.wysiwyg' module
@@ -31,10 +31,6 @@ var WysiwygRoot = Widget.extend({
 
         return this._super().then(function () {
             if (!assetsLoaded) {
-                var Wysiwyg = odoo.__DEBUG__.services['web_editor.wysiwyg'];
-                _.each(['getRange', 'setRange', 'setRangeFromNode'], function (methodName) {
-                    WysiwygRoot[methodName] = Wysiwyg[methodName].bind(Wysiwyg);
-                });
                 assetsLoaded = true;
             }
 

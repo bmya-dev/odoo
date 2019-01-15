@@ -1,283 +1,237 @@
-// NOTE EDITOR
+// V2
 
-.note-editor.note-frame {
-    background-color: inherit;
+we3-editor {
+    position: relative;
+    min-height: 200px;
+    max-height: 400px;
 
-    .note-editing-area .note-editable {
-        background-color: transparent !important;
-        color: inherit;
-        padding-left: 0;
-        padding-right: 0;
+    we3-editable {
+        flex: 1;
+        outline: none;
+        overflow: auto;
+        display: block;
+        padding: 10px 0;
+        min-height: 170px;
     }
 
-    &.fullscreen {
+
+    // style for dropdown & buttons (in popover & toolbar)
+
+
+    we3-popover {
+        display: none;
+        position: absolute;
+        z-index: 1;
+        bottom: -10px;
         background-color: #fff;
-    }
-}
+        border-radius: 0.2rem;
+        height: fit-content;
+        padding: 2px;
 
-.note-popover.popover {
-    z-index: $o-wysiwyg-zindex;
-    height: auto;
-    background-color: $o-wysiwyg-bg-color;
-
-    .popover-content {
-        padding-bottom: 0;
-        max-width: 334px;
-
-        >note-btn-group {
+        > * {
             white-space: nowrap;
         }
     }
-}
 
-.note-editor .note-toolbar {
-    white-space: nowrap;
-    z-index: $o-wysiwyg-zindex + 10;
-    height: $o-wysiwyg-toolbar-height;
-}
-
-.note-popover.popover .popover-content,
-.note-editor .note-toolbar {
-    font-family: $o-wysiwyg-font-family;
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6,
-    .h1,
-    .h2,
-    .h3,
-    .h4,
-    .h5,
-    .h6 {
-        font-family: $o-wysiwyg-font-family;
+    we3-toolbar {
+        display: flex;
+        z-index: 1;
+        background-color: #fff;
+        position: relative;
     }
 
-    .btn {
-        height: $o-wysiwyg-toolbar-height;
-        border: none;
-        border-radius: 0;
-        background-color: inherit;
-        color: inherit;
-        border-top: 2px solid transparent;
-        transition: all 0.3s ease 0s;
-
-        >.fa {
-            color: inherit;
-        }
-
-        &:hover {
-            border-top: 2px solid inherit;
-            color: inherit;
-
-            >.fa {
-                color: inherit;
-            }
-        }
-
-        .o_image_alt {
-            @include o-text-overflow(inline-block);
-            max-width: 100px;
-        }
-
-        &.active {
-            border-top: 2px solid white;
-            background-color: inherit;
-            color: inherit;
-            box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.5);
-
-            >.fa {
-                color: inherit;
-            }
-        }
-
-        &.o_disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-    }
-
-    .note-btn-group {
+    we3-button, we3-toggler {
+        cursor: pointer;
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
         margin: 0;
-    }
+        line-height: 1.5;
+        border-radius: 0.2rem;
+        font-weight: 500;
+        color: #666666;
+        text-align: center;
+        vertical-align: middle;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        line-height: 1.5;
+        user-select: none;
 
-    >.btn-group {
-        margin-top: 0;
+        &.active, &:active {
+            color: #212529;
+            background-color: #e6e5e5;
+            border-color: #dfdfdf;
+        }
 
-        &.show,
-        .btn-group.show {
-            .dropdown-toggle {
-                border-top: 2px solid white;
-                background-color: $o-wysiwyg-bg-color-dark;
-                box-shadow: none;
-
-                >.fa,
-                >span {
-                    color: inherit;
-                }
+        &.disabled {
+            color: #aaaaaa;
+            we3-button {
+                color: #aaaaaa;
             }
         }
     }
 
-    .dropdown-menu {
-        margin: 0;
-        border-radius: 0;
-        background-color: $o-wysiwyg-bg-color;
-        color: inherit;
-        white-space: normal;
-
-        .dropdown-item {
-            width: 100%;
-            color: inherit;
-
-            >.fa {
-                color: inherit;
-            }
-
-            &:hover {
-                background-color: $o-wysiwyg-bg-color-dark;
-                color: inherit;
-
-                >.fa {
-                    color: inherit;
-                }
-            }
-        }
-    }
-
-    .note-para .dropdown-menu {
-        min-width: 0;
+    we3-button {
         white-space: nowrap;
     }
 
-    .note-color {
+    we3-popover, we3-toolbar {
+        user-select: none;
 
-        .note-back-color-preview,
-        .note-fore-color-preview {
-            .dropdown-toggle {
-                padding: 0px 7px;
-                height: 35px;
+        we3-group {
+            position: relative;
+            display: inline-flex;
+            vertical-align: middle;
+            margin: 0 2px;
+
+            > button {
+                &:not(:first-child) {
+                    border-top-left-radius: 0;
+                    border-bottom-left-radius: 0;
+                }
+                &:not(:last-child) {
+                    border-top-right-radius: 0;
+                    border-bottom-right-radius: 0;
+                }
+            }
+        }
+        we3-button {
+            flex: 1 1 auto;
+        }
+        we3-button:focus {
+            outline: none;
+        }
+        > we3-button {
+            margin: 0 2px;
+        }
+    }
+
+    we3-dropdown {
+        position: relative;
+        margin: 0 2px;
+
+        > we3-toggler {
+            position: relative;
+
+            we3-placeholder we3-button {
+                display: inline-block;
+                margin: 0;
+                padding: 0;
+                border: 0;
                 width: auto;
-                border-top: none;
-                border-bottom: 3px solid;
-
-                &:after {
-                    display: none;
-                }
+                background-color: transparent;
             }
         }
-
-        .dropdown-menu {
-            min-width: 180px;
-
-            .note-custom-color {
-                cursor: pointer;
-                border-radius: 5px;
-
-                &:hover {
-                    background-color: gray('400');
-                    color: black
-                }
-            }
+        > *:nth-child(2) {
+            position: absolute;
+            left: 0;
+            box-shadow: 0 6px 12px -4px rgba(0, 0, 0, 0.25);
+            background-color: #FFFFFF;
+            padding: 4px;
         }
+        > we3-vertical-items {
+            display: block;
 
-        .dropdown-toggle:after {
-            display: none;
-        }
-
-        .note-palette:first-child {
-            width: 100%;
-
-            .note-color-reset,
-            .note-custom-color {
-                width: 162px;
-            }
-
-            .note-color-reset {
-                padding: 0 3px !important;
-                height: 32px;
-            }
-
-            .note-holder,
-            .note-color-palette .note-color-row,
-            .note-custom-color-palette .note-color-row {
-                height: auto !important;
-
-                &::after {
-                    content: "";
-                    display: table;
-                    clear: both;
-                }
-
-                .note-color-btn {
-                    float: left;
-                    height: 20px;
-                    width: 20px;
-                    margin: 1px 1px 0 0;
-                    border: 1px solid black;
-                    cursor: pointer;
-                    @include o-alpha-button-preview;
-
-                    &.o_small {
-                        width: 16px;
-                        height: 16px;
-                        margin: 3px 3px 2px 2px;
-                        border-radius: 50%;
-                    }
-
-                    &.o_clear {
-                        clear: both;
-                    }
-
-                    &.o_btn_transparent {
-                        display: none;
-                    }
-                }
+            > we3-button {
+                width: 100%;
+                display: block;
             }
         }
     }
-}
 
-.note-popover.popover.note-hint-popover .popover-content {
-    height: auto;
-}
 
-.note-popover,
-.note-editor {
-    .modal .modal-footer p {
+    // style for plugins
+
+
+    we3-toolbar we3-button[data-method="removeMedia"] {
         display: none;
     }
-}
 
-.note-handle {
-    pointer-events: none;
+    > textarea[name="codeview"] {
+        flex: 1;
+        border: 0;
+        resize: none;
+        background-color: black;
+        color: white;
+        font-family: "Lucida Console", Monaco, monospace;
+    }
 
-    .note-control-selection {
-        z-index: 1;
-        overflow: hidden;
+    we3-dropdown[data-plugin="TablePicker"] we3-tablepicker {
+        display: block;
+        min-width: 3em;
+        min-height: 3em;
+        padding: 0;
+        margin: 0;
+        .wysiwyg-dimension-picker {
+            overflow: hidden;
+        }
+        we3-row {
+            display: block;
+            white-space: nowrap;
+            we3-button {
+                width: 1em;
+                height: 1em;
+                padding: 0;
+                margin: 0;
+                border: 1px solid #000;
+                border-radius: 0;
 
-        .note-control-se {
-            border-top: 0;
-            border-left: 0;
-            background: transparent;
+                &:hover {
+                    background-color: #875A7B;
+                }
+            }
+            we3-button.wysiwyg-tablepicker-highlighted {
+                background-color: #875A7B;
+            }
         }
     }
-}
+    we3-dropdown[data-plugin="ForeColor"],
+    we3-dropdown[data-plugin="BgColor"] {
+        we3-palette {
+            display: block;
+            padding: 4px 4px 10px 4px;
+            > we3-button {
+                width: 100%;
+                margin: 4px 0;
+            }
+            we3-row {
+                display: block;
+                white-space: nowrap;
+                we3-button {
+                    width: 20px;
+                    height: 20px;
+                    padding: 0;
+                    margin: 0;
+                    border: 1px solid #fff;
+                }
+            }
+        }
+        we3-placeholder we3-button, {
+            width: 20px;
+            height: 2px;
+            position: absolute;
+            bottom: 1px;
+            margin-left: -4px;
+        }
+    }
 
-.o_fake_editable:not([data-oe-model]):focus {
-    outline: none;
-}
-
-.note-editor.dragover .note-dropzone {
-    z-index: $o-wysiwyg-zindex + 1;
+    &.fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1050;
+        width: 100%;
+        background-color: white;
+    }
 }
 
 // MODALS
 
 body .modal {
-
+    .help-list-item {
+        .help-shortcut {
+            min-width: 33%;
+        }
+    }
     // SELECT MEDIA
     .o_select_media_dialog {
         max-width: 80%;
@@ -472,35 +426,6 @@ img.o_we_selected_image {
 }
 
 .fa.mx-auto,
-img.o_we_custom_image.mx-auto {
+img.mx-auto {
     display: block;
-}
-
-// ENTER IN EDIT MODE
-
-.note-editor .css_editable_mode_display {
-    border: 1px dashed rgba(153, 153, 153, 0.5);
-    display: block !important;
-}
-
-.note-editable {
-
-    li,
-    p,
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-        &:empty:after {
-            content: "\00a0"
-        }
-    }
-}
-
-.wysiwyg_iframe {
-    margin: 0;
-    padding: 0;
-    border: 0;
 }

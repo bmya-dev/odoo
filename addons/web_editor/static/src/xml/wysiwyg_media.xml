@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates>
+    <we3-group t-name="wysiwyg.buttons.media">
+        <we3-button name="image-dialog" data-method="showImageDialog" title="Picture">
+            <i class="fa fa-file-image-o"></i>
+        </we3-button>
+        <we3-button name="image-remove" data-method="removeMedia" title="Remove Media">
+            <i class="fa fa-trash"></i>
+        </we3-button>
+    </we3-group>
+
+    <we3-group t-name="wysiwyg.buttons.size">
+        <we3-button name="size-auto" data-method="update" data-value="auto">Auto</we3-button>
+        <we3-button name="size-100" data-method="update" data-value="100%" title="Resize Full">100%</we3-button>
+        <we3-button name="size-50" data-method="update" data-value="50%" title="Resize Half">50%</we3-button>
+        <we3-button name="size-25" data-method="update" data-value="25%" title="Resize Quarter">25%</we3-button>
+    </we3-group>
+
+    <we3-dropdown t-name="wysiwyg.buttons.padding">
+        <we3-toggler title="Padding">
+            <i class="fa fa-plus-square-o"></i>
+        </we3-toggler>
+        <we3-vertical-items>
+            <we3-button name="padding-none" data-method="update" data-value="">None</we3-button>
+            <we3-button name="padding-small" data-method="update" data-value="padding-small">Small</we3-button>
+            <we3-button name="padding-medium" data-method="update" data-value="padding-medium">Medium</we3-button>
+            <we3-button name="padding-large" data-method="update" data-value="padding-large">Large</we3-button>
+            <we3-button name="padding-xl" data-method="update" data-value="padding-xl">Xl</we3-button>
+        </we3-vertical-items>
+    </we3-dropdown>
+
+    <we3-group t-name="wysiwyg.buttons.align">
+        <we3-button name="align-left" data-method="update" data-value="left" title="Float Left">
+            <i class="fa fa-align-left"></i>
+        </we3-button>
+        <we3-button name="align-center" data-method="update" data-value="center" title="Align Center">
+            <i class="fa fa-align-center"></i>
+        </we3-button>
+        <we3-button name="align-right" data-method="update" data-value="right" title="Float Right">
+            <i class="fa fa-align-right"></i>
+        </we3-button>
+        <we3-button name="align-none" data-method="update" data-value="none" title="Normal">
+            <i class="fa fa-align-justify"></i>
+        </we3-button>
+    </we3-group>
+</templates>

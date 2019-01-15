@@ -10,9 +10,9 @@ var _t = core._t;
 
 var WysiwygMultizone = Wysiwyg.extend({
     assetLibs: Wysiwyg.prototype.assetLibs.concat(['website.compiled_assets_wysiwyg']),
-    _getWysiwygContructor: function () {
-        return odoo.__DEBUG__.services['web_editor.wysiwyg.multizone'];
-    }
+    // _getWysiwygContructor: function () {
+    //     return odoo.__DEBUG__.services['web_editor.wysiwyg.multizone'];
+    // }
 });
 
 var EditorMenu = Widget.extend({

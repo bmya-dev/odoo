@@ -1,0 +1,1455 @@
+odoo.define('wysiwyg.plugin.arch', function (require) {
+'use strict';
+
+var AbstractPlugin = require('web_editor.wysiwyg.plugin.abstract');
+var Manager = require('web_editor.wysiwyg.plugin.manager');
+var customNodes = require('wysiwyg.plugin.arch.customNodes');
+var FragmentNode = require('wysiwyg.plugin.arch.fragment');
+var ArchNode = require('wysiwyg.plugin.arch.node');
+var Renderer = require('wysiwyg.plugin.arch.renderer');
+var RootNode = require('wysiwyg.plugin.arch.root');
+var VirtualText = require('wysiwyg.plugin.arch.virtualText');
+var VisibleText = require('wysiwyg.plugin.arch.visibleText');
+var WrappedRange = require('wysiwyg.WrappedRange');
+
+var $ = require('web_editor.jquery');
+var _ = require('web_editor._');
+
+var styleTags = [
+    'p',
+    'td',
+    'th',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'blockquote',
+    'pre',
+];
+var formatTags = [
+    'abbr',
+    'acronym',
+    'b',
+    'bdi',
+    'bdo',
+    'big',
+    'blink',
+    'cite',
+    'code',
+    'dfn',
+    'em',
+    'font',
+    'i',
+    'ins',
+    'kbd',
+    'mark',
+    'nobr',
+    'q',
+    's',
+    'samp',
+    'small',
+    'span',
+    'strike',
+    'strong',
+    'sub',
+    'sup',
+    'tt',
+    'u',
+    'var',
+];
+var reEscaped = /(&[a-z0-9]+;)/gi;
+var technicalSpan = document.createElement('span');
+var voidTags = [
+    'br',
+    'img',
+    'iframe',
+    'hr',
+    'input'
+];
+
+var ArchPlugin = AbstractPlugin.extend({
+    dependencies: [],
+
+    customRules: [
+        // [function (json) { return json; },
+        // ['TEXT']],
+    ],
+
+    editableDomEvents: {
+        'mouseup': '_onMouseUp',
+        'keyup': '_onKeyup',
+    },
+
+    // all rules are applied exept in pre
+
+    // children must contains parents without other node between (must match at least with one)
+    //
+    // [parents, children]
+    // parents must be the nodeName or null
+    //    null = no needed parent (allow to have for eg: Table > jinja)
+    // children is the nodeName (or uppercase custom NodeName)
+    //    or a method who receive the export json and return a boolean
+    //    or the "pluginName.methodName" who receive the export json and return a boolean
+    parentedRules: [
+        // table > tbody
+        [
+            ['table'],
+            ['tbody', 'thead', 'tfoot'],
+        ],
+        [
+            ['tbody', 'thead', 'tfoot'],
+            ['tr'],
+        ],
+        [
+            ['tr'],
+            ['td', 'th'],
+        ],
+        [
+            ['ul', 'ol'],
+            ['li'],
+        ],
+        // editable > p
+        [
+            ['EDITABLE', 'div', 'td', 'th', 'li'],
+            styleTags.concat(['ul', 'ol']),
+        ],
+        // H1 > i
+        // b > i
+        [
+            styleTags.concat(formatTags).concat(['a', 'li']),
+            formatTags.concat(['TEXT', 'img']),
+        ],
+        [
+            styleTags.concat(formatTags).concat(['div', 'td', 'th', 'li']),
+            ['br'],
+        ],
+    ],
+
+    // avoids the nodes contains the other node or itself
+    avoidParentRules: [
+        [
+            'p',
+            'h1',
+            'h2',
+            'h3',
+            'h4',
+            'h5',
+            'h6',
+            'blockquote',
+        ]
+    ],
+
+    // parents order, can not contains itself as parents
+    orderRules: [
+        formatTags.concat(['br']),
+    ],
+
+    formatTags: formatTags,
+    voidTags: voidTags,
+
+    isVoidBlockList: ['Arch._isVoidBlock'],
+    isUnbreakableNodeList: ['Arch._isUnbreakableNode'],
+    isEditableNodeList: ['Arch._isEditableNode'],
+
+    init: function (parent, params, options) {
+        this._super.apply(this, arguments);
+        this.customRules = this.customRules.slice();
+        this.parentedRules = this.parentedRules.slice();
+        this.orderRules = this.orderRules.slice();
+
+        this.isVoidBlockList = this.isVoidBlockList.slice();
+        this.isUnbreakableNodeList = this.isUnbreakableNodeList.slice();
+        this.isEditableNodeList = this.isEditableNodeList.slice();
+
+        if (this.options.customRules) {
+            this.customRules.push.apply(this.customRules, this.options.customRules);
+        }
+        if (this.options.parentedRules) {
+            this.parentedRules.push.apply(this.parentedRules, this.options.parentedRules);
+        }
+        if (this.options.orderRules) {
+            this.orderRules.push.apply(this.orderRules, this.options.orderRules);
+        }
+        if (this.options.isVoidBlock) {
+            this.isVoidBlock.push.apply(this.isVoidBlock, this.options.isVoidBlock);
+        }
+        if (this.options.isUnbreakableNode) {
+            this.isUnbreakableNode.push.apply(this.isUnbreakableNode, this.options.isUnbreakableNode);
+        }
+        if (this.options.isEditableNode) {
+            this.isEditableNode.push.apply(this.isEditableNode, this.options.isEditableNode);
+        }
+
+        var self = this;
+        ['customRules', 'parentedRules'].forEach(function (name) {
+            self[name].forEach(function (rule) {
+                rule[1].forEach(function (checker) {
+                    if (typeof checker === 'string' && checker.indexOf('.') !== -1) {
+                        checker = checker.split('.');
+                        self.dependencies.push(checker[0]);
+                    }
+                });
+            });
+        });
+        ['isVoidBlockList', 'isUnbreakableNodeList', 'isEditableNodeList'].forEach(function (name) {
+            self[name].forEach(function (checker) {
+                if (typeof checker === 'string' && checker.indexOf('.') !== -1) {
+                    checker = checker.split('.');
+                    self.dependencies.push(checker[0]);
+                }
+            });
+        });
+    },
+
+    setEditorValue: function (value) {
+        this._reset(value || '');
+        return this._arch.toString({});
+    },
+    start: function () {
+        var promise = this._super();
+
+        var self = this;
+        ['customRules', 'parentedRules'].forEach(function (name) {
+            self[name].forEach(function (rule) {
+                rule[1] = rule[1].map(function (checker) {
+                    if (typeof checker === 'string' && checker.indexOf('.') !== -1) {
+                        checker = checker.split('.');
+                        var Plugin = self.dependencies[checker[0]];
+                        return Plugin[checker[1]].bind(Plugin);
+                    }
+                    return checker;
+                });
+            });
+        });
+        ['isVoidBlockList', 'isUnbreakableNodeList', 'isEditableNodeList'].forEach(function (name) {
+            self[name] = self[name].map(function (checker) {
+                if (typeof checker === 'string' && checker.indexOf('.') !== -1) {
+                    checker = checker.split('.');
+                    var Plugin = self.dependencies[checker[0]];
+                    return Plugin[checker[1]].bind(Plugin);
+                }
+                return checker;
+            });
+        });
+
+        this.isEditableNode = this.isEditableNode.bind(this);
+        this.isUnbreakableNode = this.isUnbreakableNode.bind(this);
+
+        this._changes = [];
+        this._arch = new RootNode({
+            parentedRules: this.parentedRules,
+            customRules: this.customRules,
+            orderRules: this.orderRules,
+            formatTags: formatTags,
+            voidTags: voidTags,
+
+            add: this._addToArch.bind(this),
+            create: this._createArchNode.bind(this),
+            change: this._changeArch.bind(this),
+            remove: this._removeFromArch.bind(this),
+            import: this._importJSON.bind(this),
+
+            isVoidBlock: this.isVoidBlock.bind(this),
+            isEditableNode: this.isEditableNode.bind(this),
+            isUnbreakableNode: this.isUnbreakableNode.bind(this),
+        });
+        this._renderer = new Renderer(this.editable, {
+            attributeBlacklist: this.options.renderingAttributeBlacklist || [],
+        });
+        this._reset();
+
+        return promise;
+    },
+
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    /**
+     * @param {object} [options]
+     * @param {boolean} options.keepVirtual
+     * @param {boolean} options.architecturalSpace
+     * @param {boolean} options.showIDs
+     * @returns {string}
+     **/
+    getValue: function (options) {
+        return this._arch.toString(options || {}).trim();
+    },
+    addCustomRule: function (callback, children) {
+        this.customRules.push([callback, children]);
+    },
+    addStructureRule: function (parents, children) {
+        this.parentedRules.push([parents, children]);
+    },
+    addOrderedList: function (list) {
+        this.orderRules.push(list);
+    },
+    parentIfText: function (id) {
+        var archNode = this._getNode(id);
+        return archNode && (archNode.isText() ? archNode.parent.id : archNode.id);
+    },
+    /**
+     * Get a representation of the Arch with architectural space, node IDs and virtual nodes
+     */
+    repr: function () {
+        return this.getValue({
+            showIDs: true,
+            keepVirtual: true,
+            architecturalSpace: true
+        });
+    },
+    parse: function (DOM) {
+        var fragment;
+        if (typeof DOM === 'string') {
+            fragment = this._parse(DOM);
+        } else if (typeof DOM === 'number') {
+            var archNode = this._getNode(DOM);
+            if (archNode !== this._arch && !archNode.isFragment()) {
+                if (archNode.parent === targetArchNode && archNode.index() < offset) {
+                    offset--;
+                }
+                fragment = new FragmentNode(this._arch.params);
+                fragment.append(archNode);
+            } else {
+                fragment = archNode;
+            }
+        } else if (DOM instanceof ArchNode) {
+            if (DOM.isClone()) {
+                DOM = this._importJSON(DOM.toJSON({keepVirtual: true}));
+            }
+            fragment = new FragmentNode(this._arch.params);
+            fragment.append(DOM);
+        } else {
+            fragment = new FragmentNode(this._arch.params);
+            if (DOM.nodeType !== DOM.DOCUMENT_FRAGMENT_NODE) {
+                var dom = document.createDocumentFragment();
+                dom.append(DOM);
+                DOM = dom;
+            }
+            DOM.childNodes.forEach(function (node) {
+                fragment.append(self._parseElement(node));
+            });
+        }
+        return fragment;
+    },
+
+    //--------------------------------------------------------------------------
+    // Public from Common
+    //--------------------------------------------------------------------------
+
+    /**
+     * Add a method to the `_isVoidBlock` array.
+     *
+     * @see isVoidBlock
+     * @see _isVoidBlock
+     * @param {Function (Node)} fn
+     */
+    addVoidBlockCheck: function (fn) {
+        if (this.isVoidBlockList.indexOf(fn) === -1) {
+            this.isVoidBlockList.push(fn);
+        }
+    },
+    addUnbreakableNodeCheck: function (fn) {
+        if (this.isUnbreakableNodeList.indexOf(fn) === -1) {
+            this.isUnbreakableNodeList.push(fn);
+        }
+    },
+    addEditableNodeCheck: function (fn) {
+        if (this.isEditableNodeList.indexOf(fn) === -1) {
+            this.isEditableNodeList.push(fn);
+        }
+    },
+    /**
+     * Return true if the node is a block media to treat like a block where
+     * the cursor can not be placed inside like the void.
+     * The conditions can be extended by plugins by adding a method with
+     * `addVoidBlockCheck`. If any of the methods returns true, this will too.
+     *
+     * @see _isVoidBlock
+     * @see addVoidBlockCheck
+     * @param {Node} node
+     * @returns {Boolean}
+     */
+    isVoidBlock: function (archNode) {
+        for (var i = 0; i < this.isVoidBlockList.length; i++) {
+            if (this.isVoidBlockList[i](archNode)) {
+                return true;
+            }
+        }
+        return false;
+    },
+    /**
+     * Return true if the current node is unbreakable.
+     * An unbreakable node can be removed or added but can't by split into
+     * different nodes (for keypress and selection).
+     * An unbreakable node can contain nodes that can be edited.
+     *
+     * @param {Node} node
+     * @returns {Boolean}
+     */
+    isUnbreakableNode: function (node) {
+        for (var i = 0; i < this.isUnbreakableNodeList.length; i++) {
+            if (this.isUnbreakableNodeList[i](node)) {
+                return true;
+            }
+        }
+        return false;
+    },
+    /**
+     * Return true if the current node is editable (for keypress and selection).
+     *
+     * @param {Node} node
+     * @returns {Boolean}
+     */
+    isEditableNode: function (node) {
+        for (var i = 0; i < this.isEditableNodeList.length; i++) {
+            if (!this.isEditableNodeList[i](node)) {
+                return false;
+            }
+        }
+        return true;
+    },
+
+    //--------------------------------------------------------------------------
+    // Public GETTER
+    //--------------------------------------------------------------------------
+
+    /**
+     * @param {Int} id
+     * @param {boolean} options.keepVirtual
+     * @param {boolean} options.architecturalSpace
+     * @returns {JSON}
+     **/
+    export: function (id, options) {
+        var archNode;
+        if (typeof id === 'object') {
+            options = id;
+            id = null;
+        }
+        if (id) {
+            archNode = this._getNode(id);
+        } else {
+            archNode = this._arch;
+        }
+        return archNode ? archNode.toJSON(options) : {};
+    },
+    exportRange: function () {
+        return Object.assign({}, this._range);
+    },
+    /**
+     * @param {Int} id
+     * @param {Object} [options]
+     * @param {int} options.spacer
+     *      number of space for indent the html (remove old architecturalSpaces if outside PRE tag)
+     * @param {boolean} options.architecturalSpace
+     * @returns {string}
+     **/
+    render: function (id, options) {
+        return this._manager.render(id, options);
+    },
+    getElement: function (id) {
+        return this._renderer.getElement(id);
+    },
+    whoIsThisNode: function (element) {
+        return this._renderer.whoIsThisNode(element);
+    },
+    getNode: function (idOrElement) {
+        var archNodeId = typeof idOrElement === 'number' ? idOrElement : this.whoIsThisNode(idOrElement);
+        return this._archClone.getNode(archNodeId);
+    },
+
+    //--------------------------------------------------------------------------
+    // Range methods
+    //--------------------------------------------------------------------------
+
+    getFocusedNode: function () {
+        return this.getNode(this.parentIfText(this._range.scID));
+    },
+    /**
+     * @returns {WrappedRange}
+     */
+    getRange: function () {
+        var sc = this.getElement(this._range.scID);
+        var ec = this._range.scID === this._range.ecID ? sc : this.getElement(this._range.ecID);
+        return new WrappedRange(this, {
+            sc: sc,
+            scArch: this._archClone.getNode(this._range.scID),
+            scID: this._range.scID,
+            so: this._range.so,
+            ec: ec,
+            ecArch: this._archClone.getNode(this._range.ecID),
+            ecID: this._range.ecID,
+            eo: this._range.eo,
+        });
+    },
+    /**
+     * Set the range.
+     * Pass only `points.sc` to set the range on the whole element.
+     * Pass only `points.sc` and `points.so` to collapse the range on the start.
+     *
+     * @param {Object} points
+     * @param {Node} points.sc
+     * @param {Number} [points.so]
+     * @param {Node} [points.ec]
+     * @param {Number} [points.eo] must be given if ec is given
+     */
+    setRange: function (points) {
+        var pointsWithIDs = {
+            scID: points.scID || this.whoIsThisNode(points.sc),
+            so: points.so,
+            ecID: points.ecID || (points.ec ? this.whoIsThisNode(points.ec) : undefined),
+            eo: points.eo,
+        };
+
+        this._setRangeWithIDs(pointsWithIDs);
+        this._setRange();
+    },
+    /**
+     * Select the target media on the right (or left)
+     * of the currently selected target media.
+     *
+     * @param {Node} target
+     * @param {Boolean} left
+     */
+    setRangeOnVoidBlock: function (target, left) {
+        var archNode = this.getNode(target);
+        if (!archNode || !this.isVoidBlock(archNode)) {
+            return;
+        }
+
+        console.warn('TODO');
+
+        this.setRange({
+            scID: archNode.id,
+        });
+
+        // var range = this._getRange();
+        // var contentEditable;
+        // var targetClosest;
+
+        // if (
+        //     range.sc.tagName && target.contains(range.sc) &&
+        //     range.sc.classList.contains('o_fake_editable') &&
+        //     left === !range.sc.previousElementSibling
+        // ) {
+        //     contentEditable = this.utils.ancestor(range.sc, function (node) {
+        //         return node.getAttribute('contentEditable');
+        //     });
+        //     targetClosest = this.utils.ancestor(target, function (node) {
+        //         return node.getAttribute('contentEditable');
+        //     });
+        //     if (targetClosest !== contentEditable) {
+        //         contentEditable.focus();
+        //     }
+        //     return;
+        // }
+
+        // var next = this.getPoint(target, 0);
+        // var method = left ? 'prevUntil' : 'nextUntil';
+        // next = next[method](function (point) {
+        //     return point.node !== target && !target.contains(point.node) ||
+        //         point.node.contentEditable === 'true' ||
+        //         point.node.classList && point.node.classList.contains('o_fake_editable');
+        // });
+        // if (!next || next.node !== target && !target.contains(next.node)) {
+        //     next = this.getPoint(target, 0);
+        // }
+
+        // contentEditable = this.utils.ancestor(next.node, function (node) {
+        //     return node.getAttribute('contentEditable');
+        // });
+        // targetClosest = this.utils.ancestor(target, function (node) {
+        //     return node.getAttribute('contentEditable');
+        // });
+        // if (targetClosest !== contentEditable) {
+        //     // move the focus only if the new contentEditable is not the same (avoid scroll up)
+        //     // (like in the case of a video, which uses two contentEditable in the media, so as to write text)
+        //     contentEditable.focus();
+        // }
+
+        // if (range.sc !== next.node || range.so !== next.offset) {
+        //     this.setRange({
+        //         sc: next.node,
+        //         so: next.offset,
+        //     });
+        // }
+    },
+    _deducePoints: function (pointsWithIDs) {
+        var scID = pointsWithIDs.scID;
+        var so = pointsWithIDs.so || 0;
+        var ecID = pointsWithIDs.ecID || scID;
+        var eo = pointsWithIDs.eo;
+        if (!pointsWithIDs.ecID) {
+            eo = typeof pointsWithIDs.so === 'number' ? so : this.getNode(scID).length();
+        }
+        return {
+            scID: scID,
+            so: so,
+            ecID: ecID,
+            eo: eo,
+        };
+    },
+    /**
+     * Get the range from the selection in the DOM.
+     *
+     * @private
+     * @returns {WrappedRange}
+     */
+    _getRange: function () {
+        return new WrappedRange(this, {});
+    },
+    _isCollapsed: function () {
+        return this._range.scID === this._range.ecID && this._range.so === this._range.eo;
+    },
+    _moveToBeforeInline: function (points) {
+        var isCollapsed = points.scID === points.ecID && points.so === points.eo;
+        var archSC = this._getNode(points.scID);
+        var isLeftEdgeOfInline = !points.so &&
+            (archSC.isInlineFormatNode() ||
+                archSC.isLeftEdge() && archSC.ancestor(archSC.isInlineFormatNode));
+        var prev = archSC.previousSibling();
+        if (isCollapsed && isLeftEdgeOfInline && prev) {
+            points = this._deducePoints({
+                scID: prev.id,
+                so: prev.length(),
+            });
+            points = this._moveToDeepest(points);
+        }
+        return points
+    },
+    _moveToDeepest: function (points) {
+        var self = this;
+        var startPoint = __moveToDeepest(points.scID, points.so);
+        var endPoint = __moveToDeepest(points.ecID, points.eo);
+        function __moveToDeepest(id, offset) {
+            var archNode = self._getNode(id);
+            if (!archNode) {
+                return;
+            }
+            while (archNode.childNodes && archNode.childNodes.length) {
+                var isAfterEnd = offset >= archNode.childNodes.length;
+                archNode = archNode.childNodes[isAfterEnd ? archNode.childNodes.length - 1 : offset];
+                offset = isAfterEnd ? archNode.length() : 0;
+            }
+            return {
+                id: archNode.id,
+                offset: offset,
+            };
+        };
+        if (!startPoint) {
+            startPoint = {
+                id: 1,
+                offset: 0,
+            };
+        }
+        if (!endPoint) {
+            endPoint = startPoint;
+        }
+        return {
+            scID: startPoint.id,
+            so: startPoint.offset,
+            ecID: endPoint.id,
+            eo: endPoint.offset,
+        };
+    },
+    _moveToEndOfInline: function (points) {
+        var isCollapsed = points.scID === points.ecID && points.so === points.eo;
+        var prev = this._getNode(points.scID).previousSibling();
+        var prevIsInline = prev && prev.isInlineFormatNode()
+        if (isCollapsed && !points.so && prevIsInline) {
+            points = this._deducePoints({
+                scID: prev.id,
+                so: prev.length(),
+            });
+            points = this._moveToDeepest(points);
+        }
+        return points;
+    },
+    /**
+     * Set the DOM Range from the given points.
+     *
+     * @private
+     * @param {Node} sc
+     * @param {Number} so
+     * @param {Node} ec
+     * @param {Number} eo
+     */
+    _select: function (sc, so, ec, eo) {
+        var nativeRange = this._toNativeRange(sc, so, ec, eo);
+        var selection = sc.ownerDocument.getSelection();
+        if (selection.rangeCount > 0) {
+            selection.removeAllRanges();
+        }
+        selection.addRange(nativeRange);
+    },
+    /**
+     * Set the range in the DOM, based on the current value of `this._range`.
+     *
+     * @private
+     */
+    _setRange: function () {
+        var wrappedRange = this.getRange();
+        // only if the native range change, after the redraw
+        // the renderer can associate existing note to the arch (to prevent error on mobile)
+        this._select(wrappedRange.sc, wrappedRange.so, wrappedRange.ec, wrappedRange.eo);
+
+        if (this._didRangeChange) {
+            this.trigger('range', this.exportRange());
+        }
+        if (this._isChangeElemIDs) {
+            this.trigger('focus', this.getFocusedNode());
+        }
+    },
+    /**
+     * Set the range from the selection in the DOM.
+     *
+     * @private
+     */
+    _setRangeFromDOM: function () {
+        this.setRange(this._getRange());
+    },
+    /**
+     * Set the range.
+     * Pass only `points.scID` to set the range on the whole element.
+     * Pass only `points.scID` and `points.so` to collapse the range on the start.
+     *
+     * @param {Object} points
+     * @param {Node} points.scID
+     * @param {Number} [points.so]
+     * @param {Node} [points.ecID]
+     * @param {Number} [points.eo] must be given if ecID is given
+     */
+    _setRangeWithIDs: function (points) {
+        points = this._deducePoints(points);
+        points = this._moveToDeepest(points);
+        points = this._moveToEndOfInline(points);
+        points = this._moveToBeforeInline(points);
+
+        this._didRangeChange = this._willRangeChange(points);
+        this._isChangeElemIDs = this.parentIfText(points.scID) !== this.parentIfText(this._range.scID) ||
+            this.parentIfText(points.ecID) !== this.parentIfText(this._range.ecID);
+
+        this._range.scID = points.scID;
+        this._range.so = points.so;
+        this._range.ecID = points.ecID;
+        this._range.eo = points.eo;
+    },
+    /**
+     * Get the native Range object corresponding to the given range points.
+     *
+     * @private
+     * @returns {Range}
+     */
+    _toNativeRange: function (sc, so, ec, eo) {
+        var nativeRange = sc.ownerDocument.createRange();
+        nativeRange.setStart(sc, so);
+        nativeRange.setEnd(ec, eo);
+        return nativeRange;
+    },
+    /**
+     * Return true if the range will change once set to the given points.
+     *
+     * @param {Object} points
+     * @param {Number} points.scID
+     * @param {Number} points.so
+     * @param {Number} points.ecID
+     * @param {Number} points.eo
+     * @returns {Boolean}
+     */
+    _willRangeChange: function (points) {
+        var willOffsetChange = points.so !== this._range.so || points.eo !== this._range.eo;
+        var willIDsChange = points.scID !== this._range.scID || points.ecID !== this._range.ecID;
+        var willNodesChange = this.getElement(points.scID) !== this.getElement(this._range.scID) ||
+            this.getElement(points.ecID) !== this.getElement(this._range.ecID);
+        return willOffsetChange || willIDsChange || willNodesChange;
+    },
+
+    //--------------------------------------------------------------------------
+    // Public SETTER
+    //--------------------------------------------------------------------------
+
+    wrap: function (id) {
+
+        console.warn('todo');
+    },
+    unwrap: function (id) {
+        var archNode = this._getNode(id);
+        var parent = archNode.parent;
+        var offset = archNode.index();
+        var scArch = archNode.firstChild();
+        var ecArch = archNode.lastChild();
+        var range;
+        if (scArch) {
+            range = {
+                scID: scArch.id,
+                so: 0,
+                ecID: ecArch.id,
+                eo: ecArch.length(),
+            };
+        }
+        this._resetChange();
+        archNode.childNodes.slice().forEach(function (archNode) {
+            parent.insert(archNode, offset);
+        });
+        archNode.remove();
+        this._updateRendererFromChanges(range);
+    },
+
+    /**
+     * @param {DOM|null} element (by default, use the range)
+     **/
+    remove: function (element) {
+        this._resetChange();
+        var id = typeof element === 'number' ? element : element && this.whoIsThisNode(element);
+        if (id) {
+            this._getNode(id).remove();
+        } else {
+            this._removeFromRange();
+        }
+        this._changes[0].isRange = true;
+        this._updateRendererFromChanges();
+    },
+    indent: function () {
+        this._indent(false);
+    },
+    insert: function (DOM, element, offset) {
+        if (typeof DOM !== 'string' && this.whoIsThisNode(DOM)) {
+            DOM = this.whoIsThisNode(DOM);
+        }
+        var id = typeof element === 'number' ? element : element && this.whoIsThisNode(element);
+        if (!id) {
+            this._removeFromRange({
+                doNotRemoveEmpty: true,
+            });
+            id = this._range.scID;
+            offset = this._range.so;
+        }
+        var index = this._changes.length;
+        this._insert(DOM, id, offset);
+        if (this._changes.length > index) {
+            this._changes[index].isRange = true;
+        }
+        this._updateRendererFromChanges();
+    },
+    insertAfter: function (DOM, id) {
+        var archNode = this._getNode(id);
+        this.insert(DOM, archNode.parent.id, archNode.index());
+    },
+    insertBefore: function (DOM, id) {
+        var archNode = this._getNode(id);
+        this.insert(DOM, archNode.parent.id, archNode.index() - 1);
+    },
+    outdent: function () {
+        this._indent(true);
+    },
+    addLine: function () {
+        this._resetChange();
+        this._removeFromRange();
+        var id = this._range.scID;
+        var offset = this._range.so;
+        var index = this._changes.length;
+        this._getNode(id).addLine(offset);
+        if (this._changes.length > index) {
+            this._changes[index].isRange = true;
+        }
+        this._updateRendererFromChanges();
+    },
+    removeLeft: function () {
+        this._resetChange();
+        if (this.getRange().isCollapsed()) {
+            this._removeSide(true);
+            if (this._changes.length) {
+                var firstChange = this._changes[0];
+                var firstNode = firstChange.archNode;
+                firstChange.isRange = true;
+                var isLeftEdge = firstNode.parent && firstNode.isLeftEdge() && (firstNode.isVirtual() || !firstChange.offset);
+                if (isLeftEdge && firstNode.parent && firstNode.parent.parent) {
+                    firstNode.parent.deleteEdge(true, {
+                        doNotBreakBlocks: !firstNode.parent.isEmpty(),
+                    });
+                }
+            }
+        } else {
+            var virtualText = this._removeFromRange();
+            virtualText.parent.deleteEdge(false);
+        }
+        this._updateRendererFromChanges();
+    },
+    removeRight: function () {
+        this._resetChange();
+        if (this.getRange().isCollapsed()) {
+            this._removeSide(false);
+            if (this._changes.length) {
+                this._changes[0].isRange = true;
+            }
+        } else {
+            var virtualText = this._removeFromRange();
+            virtualText.parent.deleteEdge(false);
+        }
+        this._updateRendererFromChanges();
+    },
+    /**
+     * Indent or outdent a format node.
+     *
+     * @private
+     * @param {bool} outdent true to outdent, false to indent
+     */
+    _indent: function (outdent) {
+        this._resetChange();
+        var archNode = this._getNode(this._range.scID);
+        var listAncestor = archNode.ancestor(function (archAncestor) {
+            return archAncestor.isList();
+        });
+        if (listAncestor) {
+            this._indentList(outdent);
+        } else {
+            this._indentText(outdent);
+        }
+        this._updateRendererFromChanges();
+    },
+    _indentList: function (outdent) {
+        var archNode = this._getNode(this._range.scID);
+        if (outdent) {
+            var listAncestor = archNode.ancestor(function (archAncestor) {
+                return archAncestor.isList();
+            });
+            listAncestor = listAncestor.parent.isLi() ? listAncestor.parent : listAncestor;
+            var liAncestor = archNode.ancestor(function (archAncestor) {
+                return archAncestor.isLi();
+            }) || archNode;
+            var lastChild = liAncestor.lastChild();
+            if (archNode.length()) {
+                archNode.params.change(archNode, this._range.so);
+            } else if (lastChild && !lastChild.isDeepEmpty()) {
+                lastChild.params.change(lastChild, lastChild.length());
+            } else {
+                if (lastChild) {
+                    liAncestor.empty();
+                }
+                liAncestor.insert(this._createArchNode());
+            }
+            var next;
+            var hasOneChild = liAncestor.childNodes.length > 1;
+            if (hasOneChild) {
+                next = this._createArchNode('TEMP');
+                next.append(liAncestor.childNodes);
+            } else {
+                next = liAncestor.firstChild();
+            }
+            listAncestor[liAncestor.index() ? 'after' : 'before'](next);
+            var isNextInList = !!next.ancestor(function (nextNode) {
+                return nextNode.isList();
+            });
+            next.nodeName = hasOneChild ? (isNextInList ? 'li' : 'p') : next.nodeName;
+            var toRemove = !liAncestor.previousSibling() && !liAncestor.nextSibling() ? listAncestor : liAncestor;
+            toRemove.remove();
+            if (!next.isEmpty() && next.nodeName !== 'li') {
+                next.deleteEdge(true, {
+                    doNotBreakBlocks: true,
+                });
+            }
+        }
+        return archNode;
+    },
+    _indentText: function (outdent) {},
+    _removeSide: function (isLeft) {
+        // TODO
+        // just select the next and do removeSide on it
+        var archNode = this._getNode(this._range.scID);
+        var ref = archNode;
+        var offset = this._range.so;
+        var virtual = this._createArchNode();
+        var doRemoveThisBR = archNode.isBR() && (isLeft && offset > 0 || !isLeft && !offset);
+        if (!doRemoveThisBR && (!archNode.previousSibling() || !archNode.previousSibling().isBR())) {
+            if (archNode.isVoid()) {
+                archNode[isLeft ? 'before' : 'after'](virtual);
+            } else {
+                archNode.insert(virtual, offset);
+            }
+            ref = virtual[isLeft ? 'previousSibling' : 'nextSibling'](function (next) {
+                return !next.isVirtual() || next[isLeft ? 'isLeftEdge' : 'isRightEdge']();
+            }) || virtual;
+            if (ref !== virtual) {
+                offset = isLeft && !ref.isVirtual() ? ref.length() : 0;
+            } else {
+                offset = isLeft ? 0 : ref.length();
+            }
+        }
+        ref[isLeft ? 'removeLeft' : 'removeRight'](offset);
+        if (isLeft && !ref.__removed && !ref.isText() && !ref.isVoid() && ref.isLeftEdge()) {
+            ref.deleteEdge(true, {
+                doNotBreakBlock: true,
+            });
+        }
+    },
+
+    importUpdate: function (changes, range) {
+        var self = this;
+
+        range = range && Object.assign({}, range);
+
+        if (!changes.length) {
+            this._range = range; // fail if use _setRangeWithIDs ????
+            this._setRange();
+            return;
+        }
+
+        var nodes = {};
+        this._resetChange();
+
+        console.warn('todo: generate a diff, from changes or json import => make changes');
+
+        changes.forEach(function (change) {
+            var archNode = self._getNode(change.id);
+            if (archNode) {
+                if (change.attributes) {
+                    archNode.attributes.forEach(function (attribute) {
+                        for (var k = 0, len = change.attributes.length; k < len; k++) {
+                            if (change.attributes[k] === attribute[0]) {
+                                return;
+                            }
+                        }
+                        change.attributes.push([attribute[0], null]);
+                    });
+                    change.attributes.forEach(function (attribute) {
+                        archNode.attributes.add(attribute[0], attribute[1]);
+                    });
+                }
+                if ('nodeValue' in change) {
+                    archNode.nodeValue = change.nodeValue;
+                }
+                if (change.childNodes) {
+                    change.childNodes.forEach(function (id) {
+                        if (typeof id === 'object' && id.id && self._getNode(id.id) || nodes[id.id]) {
+                            id = id.id;
+                        }
+                        nodes[id] = self._getNode(id) || nodes[id];
+                    });
+                }
+            } else {
+                var archNode = self._importJSON(change);
+            }
+            nodes[archNode.id] = archNode;
+
+            self._changeArch(archNode, 0);
+        });
+
+        changes.forEach(function (change) {
+            if (!change.childNodes) {
+                return;
+            }
+            var archNode = self._getNode(change.id);
+            var childNodes = archNode.childNodes.slice();
+            archNode.empty();
+            change.childNodes.forEach(function (id) {
+                if (nodes[id]) {
+                    archNode.append(nodes[id]);
+                } else if (typeof id === 'object') {
+                    archNode.append(self._importJSON(id));
+                } else {
+                    throw new Error('Imported node "' + id + '" is missing');
+                }
+            });
+        });
+
+        this._updateRendererFromChanges(range);
+    },
+
+    //--------------------------------------------------------------------------
+    // Private from Common
+    //--------------------------------------------------------------------------
+
+    _updateRendererFromChanges: function (range) {
+        var self = this;
+
+        var result = this._getChanges();
+        if (!result.changes.length) {
+            return;
+        }
+
+        var json = result.changes.map(function (change) {
+            return self._getNode(change.id).toJSON({
+                keepVirtual: true,
+            });
+        });
+        this._renderer.update(json);
+
+        if (range) {
+            this._range = range; // fail if use _setRangeWithIDs ????
+        } else {
+            range = result.range;
+            if (this.getElement(range.id)) {
+                this._setRangeWithIDs({
+                    scID: range.id,
+                    so: range.offset,
+                });
+            }
+        }
+
+        this._archClone = this._arch.clone({keepVirtual: true});
+
+        this.trigger('update', json);
+        this._setRange();
+        this.trigger_up('change');
+    },
+    _isVoidBlock: function (archNode) {
+        return archNode.attributes && archNode.attributes.contentEditable === 'false';
+    },
+    _isUnbreakableNode: function (archNode) { // TODO
+        return false;
+        return  node === this.editable || !this.isEditableNode(node.parentNode);
+    },
+    _isEditableNode: function (archNode) {
+        // console.warn('todo');
+        return false;
+        archNode = archNode && (archNode.isText() ? archNode : archNode.parent);
+        if (!archNode) {
+            return false;
+        }
+        return ['table', 'thead', 'tbody', 'tfoot', 'tr'].indexOf(archNode.nodeName.toLowerCase()) === -1;
+    },
+
+    //--------------------------------------------------------------------------
+    // Private from ArchManager
+    //--------------------------------------------------------------------------
+
+    /**
+     * Insert a node in the Arch.
+     *
+     * @param {string|DOM|FragmentDOM} DOM
+     * @param {DOM} [element]
+     * @param {Number} [offset]
+     * @returns {Number}
+     */
+    _insert: function (DOM, id, offset) {
+        var self = this;
+        var targetArchNode = id ? this._getNode(id) : this._arch;
+        var fragment = this.parse(DOM);
+
+        this._resetChange();
+
+        offset = offset || 0;
+        var childNodes = fragment.childNodes.slice();
+        childNodes.forEach(function (child, index) {
+            targetArchNode.insert(child, offset + index);
+        });
+    },
+    _importJSON: function (json) {
+        var self = this;
+        var archNode = this._createArchNode(json.nodeName, json);
+        if (json.childNodes) {
+            json.childNodes.forEach(function (json) {
+                archNode.append(self._importJSON(json));
+            });
+        }
+        archNode.id = json.id;
+        return archNode;
+    },
+    /**
+     * @param {string} xml
+     * @returns {ArchNode}
+     **/
+    _parse: function (html) {
+        var self = this;
+        var fragment = new FragmentNode(this._arch.params);
+
+        var reTags = '(' + this.voidTags.join('|') + ')';
+        var reAttribute = '(\\s[^>/]+((=\'[^\']*\')|(=\"[^\"]*\"))?)*';
+        var reVoidNodes = new RegExp('<(' + reTags + reAttribute + ')>', 'g');
+        var xml = html.replace(reVoidNodes, '<\$1/>').replace(/&/g, '&amp;');
+        var parser = new DOMParser();
+        var element = parser.parseFromString("<root>" + xml + "</root>","text/xml");
+
+        if (element.querySelector('parsererror')) {
+            console.error(element.firstChild);
+            return fragment;
+        }
+
+        var root = element.querySelector('root');
+
+        root.childNodes.forEach(function (element) {
+            fragment.append(self._parseElement(element));
+        });
+
+        return fragment;
+    },
+    _parseElement: function (element) {
+        var self = this;
+        var archNode;
+        if (element.tagName) {
+            var attributes = Object.values(element.attributes).map(function (attribute) {
+                return [attribute.name, attribute.value];
+            });
+            archNode = this._createArchNode(element.nodeName, attributes);
+            element.childNodes.forEach(function (child) {
+                archNode.append(self._parseElement(child));
+            });
+        } else {
+            var value = this._unescapeText(element.nodeValue);
+            archNode = this._createArchNode('TEXT', value);
+        }
+        return archNode;
+    },
+    /**
+     * Delete everything between the start and end points of the range
+     *
+     * @param {Object} [options]
+     * @param {Object} [options.doNotRemoveEmpty] true to prevent the removal of empty nodes
+     */
+    _removeFromRange: function (options) {
+        if (this._isCollapsed()) {
+            return;
+        }
+
+        var virtualTextNodeBegin = this._createArchNode(); // the next range
+        var virtualTextNodeEnd = this._createArchNode();
+
+        var endNode = this._getNode(this._range.ecID);
+        var commonAncestor = endNode.commonAncestor(this._getNode(this._range.scID));
+        endNode.insert(virtualTextNodeEnd, this._range.eo);
+
+        endNode.splitUntil(commonAncestor, endNode.length());
+
+        var fromNode = this._getNode(this._range.scID);
+        fromNode.insert(virtualTextNodeBegin, this._range.so);
+
+        var toRemove = [];
+        virtualTextNodeBegin.nextUntil(function (next) {
+            if (next === virtualTextNodeEnd) {
+                return true;
+            }
+            if (!next.childNodes || !next.childNodes.length) {
+                toRemove.push(next);
+            }
+            return false;
+        });
+
+        toRemove.forEach(function (archNode) {
+            var parent = archNode.parent;
+            archNode.remove();
+            while (parent && parent.isEmpty() && !parent.contains(virtualTextNodeBegin)) {
+                var newParent = parent.parent;
+                parent.remove();
+                parent = newParent;
+            }
+        });
+
+        virtualTextNodeBegin.parent.deleteEdge(false, options || {});
+
+        this._removeAllVirtualText([virtualTextNodeBegin.id]);
+
+        this._setRangeWithIDs({
+            scID: virtualTextNodeBegin.id,
+            so: 0,
+        });
+        return virtualTextNodeBegin;
+    },
+    /**
+     * Remove all virtual text nodes from the Arch, except the optional
+     * list passed in argument
+     *
+     * @param {Number []} [except] id's to ignore
+     */
+    _removeAllVirtualText: function (except) {
+        var self = this;
+        Object.keys(this._archNodeList).forEach(function (id) {
+            id = parseInt(id);
+            if (except && except.indexOf(id) !== -1) {
+                return;
+            }
+            var archNode = self._getNode(id);
+            if (archNode.isText() && archNode.isVirtual()) {
+                archNode.remove();
+            }
+        });
+    },
+    _reset: function (value) {
+        this._id = 1;
+        this._arch.id = 1;
+        this._arch.parent = null;
+        this._archNodeList = {'1':  this._arch};
+        this._arch.childNodes = [];
+
+        if (value) {
+            this._insert(value, 1, 0);
+            this._applyRules();
+        }
+
+        this._renderer.reset(this._arch.toJSON({keepVirtual: true}));
+
+        this._range = {
+            scID: 1,
+            so: 0,
+            ecID: 1,
+            eo: 0,
+        };
+
+        this._changes = [];
+
+        this._archClone = this._arch.clone({keepVirtual: true});
+    },
+    _unescapeText: function (text) {
+        return text.replace(reEscaped, function (a, r) {
+            technicalSpan.innerHTML = r;
+            return technicalSpan.textContent;
+        });
+    },
+    _addToArch: function (archNode) {
+        var self = this;
+        if (!archNode.__removed && archNode.parent && archNode.parent.id && !archNode.parent.isClone()) {
+            if (!archNode.id) {
+                archNode.id = ++this._id;
+            }
+            this._archNodeList[archNode.id] = archNode;
+            if (archNode.childNodes) {
+                archNode.childNodes.forEach(function (archNode) {
+                    self._addToArch(archNode);
+                });
+            }
+        }
+    },
+    _applyRules: function () {
+        this._changes.forEach(function (c) {
+            c.archNode.applyRules();
+        });
+    },
+    /**
+     * Return a className if param contains it.
+     *
+     * @param {String [][]|String} param as passed to _createArchNode
+     * @returns {String}
+     */
+    _classNameFromParam: function (param) {
+        var className = '';
+        if (!param || !Array.isArray(param)) {
+            return className;
+        }
+        param.forEach(function (p) {
+            if (p.length && p[0] === 'class') {
+                className = p[1];
+                return;
+            }
+        });
+        return className;
+    },
+    _createArchNode: function (nodeName, param) {
+        if (!nodeName || nodeName === 'TEXT-VIRTUAL') {
+            return new VirtualText(this._arch.params);
+        } else if (nodeName !== 'TEXT') {
+            var isFontAwesome = this._hasStringClass(this._classNameFromParam(param), 'fa');
+            var Constructor = customNodes[isFontAwesome ? 'FONTAWESOME' : nodeName] || ArchNode;
+            return new Constructor(this._arch.params, nodeName, param instanceof Array ? param : (param && param.attributes || []));
+        } else {
+            return new VisibleText(this._arch.params, nodeName, null, typeof param === 'string' ? param : (param && param.nodeValue || ''));
+        }
+    },
+    _changeArch: function (archNode, offset) {
+        if (archNode.isClone()) {
+            return;
+        }
+        this._changes.push({
+            archNode: archNode,
+            offset: offset,
+        });
+    },
+    _getChanges: function () {
+        var self = this;
+        this._applyRules();
+
+        var range;
+        var changes = [];
+        this._changes.forEach(function (c) {
+            if (!c.archNode.id || !self._getNode(c.archNode.id)) {
+                return;
+            }
+            var toAdd = true;
+            changes.forEach(function (change) {
+                if (change.id === c.archNode.id) {
+                    toAdd = false;
+                    change.offset = c.offset;
+                    if (c.isRange) {
+                        range = change;
+                    }
+                }
+            });
+            if (toAdd) {
+                var change = {
+                    id: c.archNode.id,
+                    offset: c.offset,
+                };
+                changes.push(change);
+                if (!range || c.isRange) {
+                    range = change;
+                }
+            }
+        });
+
+        return {
+            changes: changes,
+            range: range,
+        };
+    },
+    _getNode: function (idOrElement) {
+        var archNodeId = typeof idOrElement === 'number' ? idOrElement : this.whoIsThisNode(idOrElement);
+        return this._archNodeList[archNodeId];
+    },
+    /**
+     * Return true if the given `classString` contains the `classToFind`.
+     *
+     * @param {String} classString
+     * @param {String} classToFind
+     * @returns {Boolean}
+     */
+    _hasStringClass: function (classString, classToFind) {
+        var expressions = [
+            classToFind + ' ',
+            ' ' + classToFind,
+            '^' + classToFind + '$',
+        ];
+        return new RegExp(expressions.join('|')).test(classString);
+    },
+    _removeFromArch: function (archNode) {
+        var self = this;
+        if (this._archNodeList[archNode.id] && !archNode.isClone()) {
+            if (this._archNodeList[archNode.id] === archNode) {
+                delete this._archNodeList[archNode.id];
+            }
+            if (archNode.childNodes) {
+                archNode.childNodes.forEach(function (archNode) {
+                    self._removeFromArch(archNode);
+                });
+            }
+        }
+    },
+    _resetChange: function () {
+        this._changes = [];
+    },
+
+    //--------------------------------------------------------------------------
+    // Handlers
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     * @param {jQueryEvent} e
+     */
+    _onKeyup: function (e) {
+        var isNavigationKey = e.keyCode >= 33 && e.keyCode <= 40;
+        if (isNavigationKey) {
+            this._setRangeFromDOM();
+        }
+    },
+    /**
+     * trigger up a range event when receive a mouseup from editable
+     */
+    _onMouseUp: function (ev) {
+        this._setRangeFromDOM();
+    },
+});
+
+Manager.addPlugin('Arch', ArchPlugin);
+
+return ArchPlugin;
+});
