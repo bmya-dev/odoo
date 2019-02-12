@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.DiscussMobileNavbar" owl="1"
+         class="o_mobile_navbar">
+        <button class="btn"
+                t-att-class="active === 'mailbox' ? 'btn-primary' : 'btn-secondary'"
+                t-on-click="_onClick('mailbox')">Mailboxes</button>
+        <button class="btn"
+                t-att-class="active === 'chat' ? 'btn-primary' : 'btn-secondary'"
+                t-on-click="_onClick('chat')">Chats</button>
+        <button class="btn"
+                t-att-class="active === 'channel' ? 'btn-primary' : 'btn-secondary'"
+                t-on-click="_onClick('channel')">Channels</button>
+    </div>
+
+</templates>

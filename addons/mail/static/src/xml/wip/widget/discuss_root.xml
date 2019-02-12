@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.DiscussRoot" owl="1"
+         class="o_mail_wip_discuss_root"
+         t-attf-class="{{ isMobile ? 'o_mobile' : ''}} {{ $thread and isMobile and thread._model !== 'mail.box' ? 'o_fullscreen' : '' }}">
+        <t t-if="isMobile">
+            <!-- mobile layout -->
+            <t t-if="!$thread or thread._model === 'mail.box'">
+                <!-- no thread or mailbox selection -->
+                <t t-if="mobileNavbarTab === 'mailbox'"
+                   t-widget="MobileMailboxSelection"
+                   t-props="{ $thread }"
+                   t-on-select="_onSelectThread"/>
+                <t t-if="mobileNavbarTab === 'mailbox'">
+                    <t t-if="$thread"
+                       t-widget="Thread"
+                       t-props="{ $thread, options: threadOptions }"
+                       t-ref="'thread'"
+                       t-on-redirect="_onRedirect"/>
+                    <div t-else="" class="o_empty">No conversation.</div>
+                </t>
+                <t t-elif="!$thread">
+                   <t t-widget="ThreadPreviewList"
+                      t-props="{ options: threadPreviewListOptions }"
+                      t-on-select-thread="_onSelectThread"/>
+                </t>
+                <t t-widget="MobileNavbar"
+                   t-props="{ active: mobileNavbarTab }"
+                   t-on-select="_onSelectMobileNavbarTab"/>
+            </t>
+            <div t-else=""
+                 class="o_content">
+                <!-- chat/channel selection (mobile) -->
+                <t t-widget="Thread"
+                   t-props="{ $thread, options: threadOptions }"
+                   t-ref="'thread'"
+                   t-on-redirect="_onRedirect"/>
+                <t t-if="showComposer"
+                   t-widget="Composer"
+                   t-props="{ $thread }"/>
+            </div>
+        </t>
+        <t t-else="">
+            <!-- desktop layout -->
+            <t t-widget="Sidebar"
+               t-props="{ $thread }"
+               t-on-select-thread="_onSelectThread"/>
+            <div class="o_content">
+                <t t-if="$thread">
+                    <t t-widget="Thread"
+                       t-props="{ $thread, options: threadOptions }"
+                       t-ref="'thread'"
+                       t-on-redirect="_onRedirect"/>
+                    <t t-if="showComposer"
+                       t-widget="Composer"
+                       t-props="{ $thread }"/>
+                </t>
+            </div>
+        </t>
+    </div>
+
+</templates>

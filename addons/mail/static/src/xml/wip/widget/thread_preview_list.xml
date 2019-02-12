@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.ThreadPreviewList" owl="1"
+         class="o_thread_preview_list">
+        <div t-foreach="$threads"
+             t-as="$thread"
+             class="o_preview"
+             t-key="$thread">
+            <t t-esc="name($thread)"/>
+        </div>
+    </div>
+
+</templates>
