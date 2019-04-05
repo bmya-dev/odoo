@@ -161,13 +161,12 @@ class Web_Editor(http.Controller):
         attachment = self._image_to_attachment(res_model, res_id, image_base64, filename, filename, disable_optimization=disable_optimization)
         return attachment.read(['name', 'mimetype', 'checksum', 'url', 'res_id', 'res_model', 'access_token'])[0]
 
-    def _image_to_attachment(self, res_model, res_id, image_base64, name, datas_fname, disable_optimization=None):
+    def _image_to_attachment(self, res_model, res_id, image_base64, name, disable_optimization=None):
         Attachments = request.env['ir.attachment']
         if not disable_optimization:
             image_base64 = tools.image_process(image_base64, verify_resolution=True)
         attachment = Attachments.create({
             'name': name,
-            'datas_fname': datas_fname,
             'datas': image_base64,
             'public': res_model == 'ir.ui.view',
             'res_id': res_id,
@@ -196,12 +195,10 @@ class Web_Editor(http.Controller):
         message = None
         if not upload: # no image provided, storing the link and the image name
             name = url.split("/").pop()                       # recover filename
-            datas_fname = name
             if filters:
-                datas_fname = filters + '_' + datas_fname
+                name = filters + '_' + name
             attachment = Attachments.create({
                 'name': name,
-                'datas_fname': datas_fname,
                 'type': 'url',
                 'url': url,
                 'public': res_model == 'ir.ui.view',
@@ -216,10 +213,9 @@ class Web_Editor(http.Controller):
                 for c_file in request.httprequest.files.getlist('upload'):
                     image_base64 = base64.b64encode(c_file.read())
                     name = c_file.filename
-                    datas_fname = name
                     if filters:
-                        datas_fname = filters + '_' + datas_fname
-                    attachments += self._image_to_attachment(res_model, res_id, image_base64, name, datas_fname, disable_optimization=disable_optimization)
+                        name = filters + '_' + name
+                    attachments += self._image_to_attachment(res_model, res_id, image_base64, name, disable_optimization=disable_optimization)
                 uploads += attachments.read(['name', 'mimetype', 'checksum', 'url', 'res_id', 'res_model', 'access_token'])
             except Exception as e:
                 logger.exception("Failed to upload image to attachment")

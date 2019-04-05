@@ -1793,7 +1793,6 @@ var FieldMany2ManyBinaryMultiFiles = AbstractField.extend({
     supportedFieldTypes: ['many2many'],
     fieldsToFetch: {
         name: {type: 'char'},
-        datas_fname: {type: 'char'},
         mimetype: {type: 'char'},
     },
     events: {
