@@ -1021,11 +1021,17 @@ class Field(MetaField('DummyField', (object,), {})):
             # determine dependent fields
             spec = self.modified_draft(record)
 
-            # set value in cache, inverse field, and mark record as dirty
+            # set value in cache
             record.env.cache.set(record, self, value)
-            if env.in_onchange:
-                for invf in record._field_inverses[self]:
-                    invf._update(record[self.name], record)
+
+            if not record.id or env.in_onchange:
+                # set inverse fields on new records in the comodel
+                if self.relational:
+                    inv_recs = record[self.name].filtered(lambda r: not r.id)
+                    if inv_recs:
+                        for invf in record._field_inverses[self]:
+                            invf._update(inv_recs, record)
+                # mark field as dirty
                 env.dirty[record].add(self.name)
 
             # determine more dependent fields, and invalidate them
@@ -1120,6 +1126,18 @@ class Field(MetaField('DummyField', (object,), {})):
         if self.compute:
             return self.compute_value(record)
 
+        origin = record._origin
+        if origin:
+            # retrieve value from original record
+            value = self.convert_to_cache(origin[self.name], record)
+            return record.env.cache.set(record, self, value)
+
+        if self.type == 'many2one' and self.delegate:
+            # special case: parent records are new as well
+            parent = record.env[self.comodel_name].new()
+            value = self.convert_to_cache(parent, record)
+            return record.env.cache.set(record, self, value)
+
         null = self.convert_to_cache(False, record, validate=False)
         record.env.cache.set_special(record, self, lambda: null)
 
@@ -1152,14 +1170,14 @@ class Field(MetaField('DummyField', (object,), {})):
     # Notification when fields are modified
     #
 
-    def modified_draft(self, records):
+    def modified_draft(self, record):
         """ Same as :meth:`modified`, but in draft mode. """
-        env = records.env
+        env = record.env
 
         # invalidate the fields on the records in cache that depend on
-        # ``records``, except fields currently being computed
+        # ``record``, except fields currently being computed
         spec = []
-        for field, path in records._field_triggers[self]:
+        for field, path in record._field_triggers[self]:
             if not field.compute:
                 # Note: do not invalidate non-computed fields. Such fields may
                 # require invalidation in general (like *2many fields with
@@ -1167,16 +1185,11 @@ class Field(MetaField('DummyField', (object,), {})):
                 # we would simply lose their values during an onchange!
                 continue
 
-            target = env[field.model_name]
-            protected = env.protected(field)
-            if path == 'id' and field.model_name == records._name:
-                target = records - protected
-            elif path and env.in_onchange:
-                target = (env.cache.get_records(target, field) - protected).filtered(
-                    lambda rec: rec if path == 'id' else rec._mapped_cache(path) & records
-                )
+            if path == 'id' and field.model_name == record._name:
+                target = record
             else:
-                target = env.cache.get_records(target, field) - protected
+                target = env.cache.get_records(env[field.model_name], field)
+            target -= env.protected(field)
 
             if target:
                 spec.append((field, target._ids))
@@ -2168,18 +2181,24 @@ class Many2one(_Relational):
     def convert_to_cache(self, value, record, validate=True):
         # cache format: tuple(ids)
         if type(value) in IdType:
-            return (value,)
+            ids = (value,)
         elif isinstance(value, BaseModel):
-            if not validate or (value._name == self.comodel_name and len(value) <= 1):
-                return value._ids
-            raise ValueError("Wrong value for %s: %r" % (self, value))
+            if validate and (value._name != self.comodel_name or len(value) > 1):
+                raise ValueError("Wrong value for %s: %r" % (self, value))
+            ids = value._ids
         elif isinstance(value, tuple):
             # value is either a pair (id, name), or a tuple of ids
-            return value[:1]
+            ids = value[:1]
         elif isinstance(value, dict):
-            return record.env[self.comodel_name].new(value)._ids
+            ids = record.env[self.comodel_name].new(value)._ids
         else:
-            return ()
+            ids = ()
+
+        if self.delegate and record and not record.id:
+            # the parent record of a new record is a new record
+            ids = tuple(it and NewId(it) for it in ids)
+
+        return ids
 
     def convert_to_record(self, value, record):
         # use registry to avoid creating a recordset for the model
@@ -2269,40 +2288,54 @@ class _RelationalMulti(_Relational):
     def convert_to_cache(self, value, record, validate=True):
         # cache format: tuple(ids)
         if isinstance(value, BaseModel):
-            if not validate or (value._name == self.comodel_name):
-                return value._ids
+            if validate and value._name != self.comodel_name:
+                raise ValueError("Wrong value for %s: %s" % (self, value))
+            ids = value._ids
+            if record and not record.id:
+                # x2many field value of new record is new records
+                ids = tuple(it and NewId(it) for it in ids)
+            return ids
+
         elif isinstance(value, (list, tuple)):
             # value is a list/tuple of commands, dicts or record ids
             comodel = record.env[self.comodel_name]
-            # determine the value ids; by convention empty on new records
+            # if record is new, the field's value is new records
+            if record and not record.id:
+                browse = lambda it: comodel.browse([NewId(it)])
+            else:
+                browse = comodel.browse
+            # determine the value ids
             ids = OrderedSet(record[self.name]._ids)
             # modify ids with the commands
             for command in value:
                 if isinstance(command, (tuple, list)):
                     if command[0] == 0:
-                        ids.add(comodel.new(command[2], command[1]).id)
+                        line = comodel.new(command[2], ref=command[1])
+                        ids.add(line.id)
                     elif command[0] == 1:
-                        comodel.browse(command[1]).update(command[2])
-                        ids.add(command[1])
-                    elif command[0] == 2:
-                        # note: the record will be deleted by write()
-                        ids.discard(command[1])
-                    elif command[0] == 3:
-                        ids.discard(command[1])
+                        line = browse(command[1])
+                        line.update(command[2])
+                        ids.add(line.id)
+                    elif command[0] in (2, 3):
+                        line = browse(command[1])
+                        ids.discard(line.id)
                     elif command[0] == 4:
-                        ids.add(command[1])
+                        line = browse(command[1])
+                        ids.add(line.id)
                     elif command[0] == 5:
                         ids.clear()
                     elif command[0] == 6:
-                        ids = OrderedSet(command[2])
+                        ids = OrderedSet(NewId(it) for it in command[2])
                 elif isinstance(command, dict):
                     ids.add(comodel.new(command).id)
                 else:
-                    ids.add(command)
+                    ids.add(browse(command).id)
             # return result as a tuple
             return tuple(ids)
+
         elif not value:
             return ()
+
         raise ValueError("Wrong value for %s: %s" % (self, value))
 
     def convert_to_record(self, value, record):
@@ -2317,6 +2350,7 @@ class _RelationalMulti(_Relational):
         # make result with new and existing records
         result = [(6, 0, [])]
         for record in value:
+            record = record._origin or record
             if not record.id:
                 values = {name: record[name] for name in record._cache}
                 values = record._convert_to_write(values)
@@ -2345,12 +2379,12 @@ class _RelationalMulti(_Relational):
 
         result = [(5,)]
         for record in value:
-            if not record.id:
+            if not record.id and not record._origin:
                 result.append((0, record.id.ref or 0, vals[record]))
             elif vals[record]:
-                result.append((1, record.id, vals[record]))
+                result.append((1, record._origin.id, vals[record]))
             else:
-                result.append((4, record.id))
+                result.append((4, record._origin.id))
         return result
 
     def convert_to_export(self, value, record):
@@ -2891,4 +2925,4 @@ class PrefetchValueIds(object):
 # imported here to avoid dependency cycle issues
 from odoo import SUPERUSER_ID
 from .exceptions import AccessError, MissingError, UserError
-from .models import check_pg_name, BaseModel, IdType
+from .models import check_pg_name, BaseModel, NewId, IdType
