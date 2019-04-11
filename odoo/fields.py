@@ -1118,12 +1118,20 @@ class Field(MetaField('DummyField', (object,), {})):
     def determine_draft_value(self, record):
         """ Determine the value of ``self`` for the given draft ``record``. """
         if self.compute:
-            fields = record._field_computed[self]
-            with record.env.protecting(fields, record):
-                self._compute_value(record)
-        else:
-            null = self.convert_to_cache(False, record, validate=False)
-            record.env.cache.set_special(record, self, lambda: null)
+            return self.compute_value(record)
+
+        null = self.convert_to_cache(False, record, validate=False)
+        record.env.cache.set_special(record, self, lambda: null)
+
+        defaults = record.default_get([self.name])
+        if self.name in defaults:
+            # The null value above is necessary to convert x2many field values.
+            # For instance, converting [(4, id)] accesses the field's current
+            # value, then adds the given id. Without an initial value, the
+            # conversion ends up here to determine the field's value, and this
+            # generates an infinite recursion.
+            value = self.convert_to_cache(defaults[self.name], record)
+            return record.env.cache.set(record, self, value)
 
     def determine_inverse(self, records):
         """ Given the value of ``self`` on ``records``, inverse the computation. """
@@ -2267,7 +2275,7 @@ class _RelationalMulti(_Relational):
             # value is a list/tuple of commands, dicts or record ids
             comodel = record.env[self.comodel_name]
             # determine the value ids; by convention empty on new records
-            ids = OrderedSet(record[self.name].ids if record.id else ())
+            ids = OrderedSet(record[self.name]._ids)
             # modify ids with the commands
             for command in value:
                 if isinstance(command, (tuple, list)):
