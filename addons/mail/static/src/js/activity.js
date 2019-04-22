@@ -414,16 +414,20 @@ var BasicActivity = AbstractField.extend({
         $form.find('#activity_feedback').val(self._draftFeedback[activityID]);
         $form.on('click', '.o_activity_popover_done', function (ev) {
             ev.stopPropagation();
+            var feedback = _.escape($form.find('#activity_feedback').val()).trim();
+            feedback = feedback.replace(/(\r|\n)/g, '<br/>');
             self._markActivityDone({
                 activityID: activityID,
-                feedback: _.escape($form.find('#activity_feedback').val()),
+                feedback: feedback,
             });
         });
         $form.on('click', '.o_activity_popover_done_next', function (ev) {
             ev.stopPropagation();
+            var feedback = _.escape($form.find('#activity_feedback').val()).trim();
+            feedback = feedback.replace(/(\r|\n)/g, '<br/>');
             self._markActivityDoneAndScheduleNext({
                 activityID: activityID,
-                feedback: _.escape($form.find('#activity_feedback').val()),
+                feedback: feedback,
             });
         });
         $form.on('click', '.o_activity_popover_discard', function (ev) {
