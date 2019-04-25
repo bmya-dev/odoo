@@ -3429,6 +3429,9 @@ var BasicModel = AbstractModel.extend({
             active_model: element.model,
             current_date: moment().format('YYYY-MM-DD'),
             id: evalContext.id || false,
+            // Uses "current_company_id" because "company_id" would conflict with all the company_id fields
+            // in general, the actual "company_id" field of the form should be used for m2o domains, not this fallback
+            current_company_id: session.user_context.allowed_company_ids ? session.user_context.allowed_company_ids[0] : session.user_companies.current_company[0], 
         }, session.user_context, element.context, evalContext);
     },
     /**
