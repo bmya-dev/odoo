@@ -60,7 +60,7 @@ var WarningDialog = CrashManagerDialog.extend({
        }, options), error);
     },
     /**
-     * we want to ok button to be focused
+     * Focuses the ok button.
      * @override
      */
     open: function () {
@@ -185,7 +185,7 @@ var CrashManager = core.Class.extend({
                                     data: _.extend({}, error.data,
                                         {
                                             message: error.data.arguments[1],
-                                            title: error.data.arguments[0] !== 'Warning' ? (" - " + error.data.arguments[0]) : '',
+                                            title: error.data.arguments[0] !== 'Warning' ? error.data.arguments[0] : '',
                                         })
                                 });
                 }
@@ -206,14 +206,11 @@ var CrashManager = core.Class.extend({
                                 data: _.extend({}, error.data,
                                     {
                                         message: error.data.arguments[0],
-                                        title: map_title[error.data.exception_type] !== 'Warning' ? (" - " + map_title[error.data.exception_type]) : '',
+                                        title: map_title[error.data.exception_type] !== 'Warning' ? map_title[error.data.exception_type] : '',
                                     })
                             });
             }
-
             this.show_warning(error);
-        //InternalError
-
         } else {
             this.show_error(error);
         }
@@ -225,7 +222,7 @@ var CrashManager = core.Class.extend({
         var message = error.data ? error.data.message : error.message;
         return new WarningDialog(this, {
             title: _.str.capitalize(error.type) || _t("Odoo Warning"),
-            subtitle: error.data.title,
+            subtitle: " - " + error.data.title,
         }, {
             message: message,
         }).open();
@@ -360,12 +357,4 @@ return {
     ErrorDialog: ErrorDialog,
     WarningDialog: WarningDialog,
 };
-});
-
-odoo.define('web.crash_manager', function (require) {
-"use strict";
-
-var CrashManager = require('web.CrashManager').CrashManager;
-return new CrashManager();
-
 });
