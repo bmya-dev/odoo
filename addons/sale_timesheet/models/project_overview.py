@@ -373,12 +373,13 @@ class Project(models.Model):
             })
         ts_tree = self.env.ref('hr_timesheet.hr_timesheet_line_tree')
         ts_form = self.env.ref('hr_timesheet.hr_timesheet_line_form')
+        project_ids = self.mapped('analytic_account_id').mapped('project_ids.id')
         stat_buttons.append({
             'name': _('Timesheets'),
             'icon': 'fa fa-calendar',
             'action': _to_action_data(
                 'account.analytic.line',
-                domain=[('project_id', 'in', self.ids)],
+                domain=[('project_id', 'in', project_ids)],
                 views=[(ts_tree.id, 'list'), (ts_form.id, 'form')],
             )
         })
@@ -401,8 +402,9 @@ class Project(models.Model):
         })
 
         if self.env.user.has_group('sales_team.group_sale_salesman_all_leads'):
+            analytic_account_orders = self.env['sale.order'].search([('analytic_account_id', 'in', self.mapped('analytic_account_id.id'))])
             sale_orders = self.mapped('sale_line_id.order_id') | self.mapped(
-                'tasks.sale_order_id')
+                'tasks.sale_order_id') | analytic_account_orders
             if sale_orders:
                 stat_buttons.append({
                     'name': _('Sales Orders'),
