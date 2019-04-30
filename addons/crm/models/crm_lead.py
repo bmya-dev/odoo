@@ -760,6 +760,18 @@ class Lead(models.Model):
             'email_from': customer and customer.email or self.email_from,
             'phone': customer and customer.phone or self.phone,
             'date_conversion': fields.Datetime.now(),
+            'partner_name': customer.name if customer else False,
+            'contact_name': customer.name if not customer.is_company else False,
+            'function': customer.function if customer.function else False,
+            'title': customer.title.id if customer.title else False,
+            'country_id': customer.country_id.id if customer.country_id else False,
+            'state_id': customer.state_id.id if customer.state_id else False,
+            'city': customer.city if customer.city else False,
+            'street': customer.street if customer.street else False,
+            'street2': customer.street2 if customer.street2 else False,
+            'zip': customer.zip if customer.zip else False,
+            'mobile': customer.mobile if customer.mobile else False,
+            'website': customer.website if customer.website else False,
         }
         if not self.stage_id:
             stage = self._stage_find(team_id=team_id)
