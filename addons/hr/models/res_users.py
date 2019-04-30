@@ -177,12 +177,7 @@ class User(models.Model):
     @api.multi
     def action_create_employee(self):
         self.ensure_one()
-        form_view = self.env.ref('hr.view_employee_form')
-        return {
-            'name': _('Create Employee'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.employee',
-            'views': [(form_view.id, 'form')],
-            'target': 'new',
-            'context': {'default_user_id': self.id}
-        }
+        self.env['hr.employee'].create(dict(
+            user_id=self.id,
+            **self.env['hr.employee']._sync_user(self)
+        ))
