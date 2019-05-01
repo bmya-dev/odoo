@@ -16,7 +16,7 @@
         <field name="model">lunch.alert</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="active"/>
+                <field name="active" widget="boolean_toggle" string="Active"/>
                 <field name="message"/>
                 <field name="available_today"/>
             </tree>
@@ -35,6 +35,12 @@
                             <field name="active" widget="boolean_button"
                                 options='{"terminology": "archive"}'/>
                         </button>
+                    </div>
+                    <div class="oe_title" name="title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="Alert"/>
+                        </h1>
                     </div>
                     <group>
                         <group>

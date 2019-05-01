@@ -12,8 +12,8 @@ class LunchAlert(models.Model):
     given day, weekly or daily. The alert is displayed from start to end hour. """
     _name = 'lunch.alert'
     _description = 'Lunch Alert'
-    _rec_name = 'message'
 
+    name = fields.Char(required=True)
     message = fields.Html('Message', required=True)
 
     until = fields.Date('Show Until')
