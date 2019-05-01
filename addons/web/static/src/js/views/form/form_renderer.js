@@ -246,7 +246,7 @@ var FormRenderer = BasicRenderer.extend({
             var name = $notebook.data('name');
             if (name in state) {
                 var $page = $notebook.find('> ul > li').eq(state[name]);
-                if (!$page.hasClass('o_invisible_modifier')) {
+                if (!$page.hasClass('o_invisible_modifier') && !$page.find('a.nav-link').hasClass('active')) {
                     $page.find('a[data-toggle="tab"]').click();
                 }
             }
