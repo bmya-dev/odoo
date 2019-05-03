@@ -61,5 +61,23 @@ class ProductionLot(models.Model):
     def action_lot_open_quants(self):
         self.env['stock.quant']._quant_tasks()
         action = self.env.ref('stock.lot_open_quants').read()[0]
-        action['context'] = {'search_default_lot_id': self.id}
-        return action
+        context = {
+            'search_default_lot_id': self.id,
+            'default_product_id': self.product_id.id,
+            'single_product': True
+        }
+        # If user have rights to write on quant, we display the editable quant view.
+        if self.user_has_groups('stock.group_stock_manager'):
+            return {
+                'name': _('Stock On Hand'),
+                'view_type': 'tree',
+                'view_mode': 'tree',
+                'res_model': 'stock.quant',
+                'view_id': self.env.ref('stock.view_stock_quant_tree_editable').id,
+                'type': 'ir.actions.act_window',
+                'context': context
+            }
+        else:
+            # Otherwise, we display the classic readonly quant view.
+            action['context'] = context
+            return action
