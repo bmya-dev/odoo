@@ -6,6 +6,7 @@ var Dialog = require('web.Dialog');
 var fonts = require('wysiwyg.fonts');
 var Widget = require('web.Widget');
 var concurrency = require('web.concurrency');
+var utils = require('web.utils');
 
 var QWeb = core.qweb;
 
@@ -285,6 +286,10 @@ var ImageWidget = MediaWidget.extend({
             domain.push('|', ['datas_fname', 'ilike', needle], ['name', 'ilike', needle]);
         }
         domain.push('|', ['datas_fname', '=', false], '!', ['datas_fname', '=like', '%.crop'], '!', ['name', '=like', '%.crop']);
+        // the assets should not be part of the documents
+        if (this.options.document) {
+            domain = domain.concat('!', utils.assetsDomain());
+        }
         return domain;
     },
     /**
