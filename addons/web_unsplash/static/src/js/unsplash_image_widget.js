@@ -295,6 +295,7 @@ widgetsMedia.ImageWidget.include({
             $input.focus();
         }
         this._super.apply(this, arguments);
+        this.hasSearched = true;
     },
 });
 });
