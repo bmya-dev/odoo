@@ -735,24 +735,22 @@ class PosOrder(models.Model):
     def action_pos_order_done(self):
         return self._create_account_move_line()
 
-    @api.model
-    def create_from_ui(self, orders):
-        # Keep only new orders
-        submitted_references = [o['data']['name'] for o in orders]
-        pos_order = self.search([('pos_reference', 'in', submitted_references)])
-        existing_orders = pos_order.read(['pos_reference'])
-        existing_references = set([o['pos_reference'] for o in existing_orders])
-        orders_to_save = [o for o in orders if o['data']['name'] not in existing_references]
-        order_ids = []
+    def _create_order(self, order, draft = False):
+        """ Create an order from an given dictionary.
 
-        for tmp_order in orders_to_save:
-            to_invoice = tmp_order['to_invoice']
-            order = tmp_order['data']
-            if to_invoice:
-                self._match_payment_to_invoice(order)
-            pos_order = self._process_order(order)
-            order_ids.append(pos_order.id)
+        This function creates a new order from an given dictionary. 
 
+        Args:
+            order (dict): representation of an order
+            draft (boolean, optional): 
+        """
+        to_invoice = order['to_invoice'] if not draft else False
+        order = order['data']
+        if to_invoice:
+            self._match_payment_to_invoice(order)
+        pos_order = self._process_order(order)
+
+        if not draft:
             try:
                 pos_order.action_pos_order_paid()
             except psycopg2.OperationalError:
@@ -761,10 +759,46 @@ class PosOrder(models.Model):
             except Exception as e:
                 _logger.error('Could not fully process the POS Order: %s', tools.ustr(e))
 
-            if to_invoice:
-                pos_order.action_pos_order_invoice()
-                pos_order.invoice_id.sudo().action_invoice_open()
-                pos_order.account_move = pos_order.invoice_id.move_id
+        if to_invoice:
+            pos_order.action_pos_order_invoice()
+            pos_order.invoice_id.sudo().action_invoice_open()
+            pos_order.account_move = pos_order.invoice_id.move_id
+        return pos_order.id
+
+    @api.model
+    def create_from_ui(self, orders, draft=False):
+        """ Create and update Orders from the frontend PoS application.
+
+        Create new orders and update orders that are in draft status. If an order already exists with a status
+        diferent from 'draft'it will be discareded, otherwise it will be saved to the database. If saved with 
+        'draft' status the order can be overwritten later by this function.
+
+        Args:
+            orders (dict): dictionary with the orders to be created
+            draft (bool, optional): Indicate if the orders are ment to be finalised or temporarily saved.
+
+        Returns:
+            list: list of db-ids for the created and updated orders.
+        """
+        # Keep only new orders
+        orders_to_save = []
+        orders_to_update = []
+        order_ids = []
+
+        existing_orders = self.search_read(
+                domain = [('pos_reference', 'in', [o['data']['name'] for o in orders])],
+                fields = ['pos_reference','state']
+                )
+        existing_references = set([o['pos_reference'] for o in existing_orders])
+        orders_to_save = [o for o in orders if o['data']['name'] not in existing_references]
+
+        open_references = set([o['pos_reference'] for o in existing_orders if o['state'] == 'draft'])
+        orders_to_update = [o for o in orders if o['data']['name'] in open_references]
+
+        for order in orders_to_save:
+            order_ids.append(self._create_order(order, draft))
+        #for order in orders_to_update:
+        #    order_ids.append(self._update_order(order, draft))
         return order_ids
 
     def test_paid(self):
@@ -1062,6 +1096,7 @@ class PosOrderLine(models.Model):
     tax_ids = fields.Many2many('account.tax', string='Taxes', readonly=True)
     tax_ids_after_fiscal_position = fields.Many2many('account.tax', compute='_get_tax_ids_after_fiscal_position', string='Taxes to Apply')
     pack_lot_ids = fields.One2many('pos.pack.operation.lot', 'pos_order_line_id', string='Lot/serial Number')
+    signature = fields.Float(default=0)
 
     @api.model
     def _prepare_refund_data(self, refund_order_id):

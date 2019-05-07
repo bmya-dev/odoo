@@ -451,6 +451,14 @@ exports.PosModel = Backbone.Model.extend({
             });
         }
     },  {
+        model: 'pos.order',
+        fields: [],
+        domain: function(self){
+            return [['state', '!=', 'paid'], ['config_id', '=', self.config.id]];
+        },
+        loaded: function(self, orders) {
+        }
+    },  {
         label: 'fonts',
         loaded: function(){
             return new Promise(function (resolve, reject) {
@@ -947,7 +955,7 @@ exports.PosModel = Backbone.Model.extend({
         var args = [_.map(orders, function (order) {
                 order.to_invoice = options.to_invoice || false;
                 return order;
-            })];
+            }), true];
         return rpc.query({
                 model: 'pos.order',
                 method: 'create_from_ui',
@@ -1339,6 +1347,7 @@ exports.Orderline = Backbone.Model.extend({
         } else {
             this.set_unit_price(this.product.get_price(this.order.pricelist, this.get_quantity()));
         }
+        this.signature = this.generate_unique_identifier();
     },
     init_from_JSON: function(json) {
         this.product = this.pos.db.get_product_by_id(json.product_id);
@@ -1354,6 +1363,7 @@ exports.Orderline = Backbone.Model.extend({
             var pack_lot_line = new exports.Packlotline({}, {'json': _.extend(packlotline, {'order_line':this})});
             this.pack_lot_lines.add(pack_lot_line);
         }
+        this.signature = json.signature || generate_unique_identifier();
     },
     clone: function(){
         var orderline = new exports.Orderline({},{
@@ -1371,6 +1381,16 @@ exports.Orderline = Backbone.Model.extend({
         orderline.selected = false;
         orderline.price_manually_set = this.price_manually_set;
         return orderline;
+    },
+    generate_unique_identifier: function(){
+        var hash = function (string){
+            for(var i = 0, h = 0xdeadbeef; i < string.length; i++)
+                h = Math.imul(h ^ string.charCodeAt(i), 2654435761);
+            return (h ^ h >>> 16) >>> 0;
+        };
+        var ol = this.export_as_JSON();
+        ol.salt = Math.random();
+        return hash(JSON.stringify(ol));
     },
     set_product_lot: function(product){
         this.has_product_lot = product.tracking !== 'none' && this.pos.config.use_existing_lots;
@@ -1545,7 +1565,8 @@ exports.Orderline = Backbone.Model.extend({
             product_id: this.get_product().id,
             tax_ids: [[6, false, _.map(this.get_applicable_taxes(), function(tax){ return tax.id; })]],
             id: this.id,
-            pack_lot_ids: pack_lot_ids
+            pack_lot_ids: pack_lot_ids,
+            signature: this.signature,
         };
     },
     //used to create a json of the ticket, to be sent to the printer

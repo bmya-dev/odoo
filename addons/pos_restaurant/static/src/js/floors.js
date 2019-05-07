@@ -769,6 +769,7 @@ models.PosModel = models.PosModel.extend({
 
     // changes the current table.
     set_table: function(table) {
+        var self = this;
         if (!table) { // no table ? go back to the floor plan, see ScreenSelector
             this.set_order(null);
         } else if (this.order_to_transfer_to_different_table) {
@@ -781,12 +782,15 @@ models.PosModel = models.PosModel.extend({
 
         } else {
             this.table = table;
-            var orders = this.get_order_list();
-            if (orders.length) {
-                this.set_order(orders[0]); // and go to the first one ...
-            } else {
-                this.add_new_order();  // or create a new order with the current table
-            }
+                    this.add_new_order();  // or create a new order with the current table
+            this.get_order_list().then(function(result){
+                var orders = result;
+                if (orders.length) {
+                    self.set_order(orders[0]); // and go to the first one ...
+                } else {
+                    self.add_new_order();  // or create a new order with the current table
+                }
+            })
         }
     },
 
@@ -816,20 +820,44 @@ models.PosModel = models.PosModel.extend({
 
     // get the list of unpaid orders (associated to the current table)
     get_order_list: function() {
-        var orders = _super_posmodel.get_order_list.call(this);
-        if (!this.config.iface_floorplan) {
-            return orders;
-        } else if (!this.table) {
-            return [];
-        } else {
-            var t_orders = [];
-            for (var i = 0; i < orders.length; i++) {
-                if ( orders[i].table === this.table) {
-                    t_orders.push(orders[i]);
-                }
-            }
-            return t_orders;
-        }
+        var self = this;
+        return rpc.query({
+                model: 'pos.order',
+                method: 'search',
+                args: [[[1, '=', 1]]],
+            },{timeout: 3000, shadow: true}).then(
+                function(result) {
+                    var orders = []
+                    if (!self.config.iface_floorplan) {
+                        return orders;
+                    } else if (!self.table) {
+                        return [];
+                    } else {
+                        var t_orders = [];
+                        for (var i = 0; i < orders.length; i++) {
+                            if ( orders[i].table === self.table) {
+                                t_orders.push(orders[i]);
+                            }
+                        }
+                        return t_orders;
+                    }
+                }, 
+                function(error){
+                    var orders = _super_posmodel.get_order_list.call(self);
+                    if (!self.config.iface_floorplan) {
+                        return orders;
+                    } else if (!self.table) {
+                        return [];
+                    } else {
+                        var t_orders = [];
+                        for (var i = 0; i < orders.length; i++) {
+                            if ( orders[i].table === self.table) {
+                                t_orders.push(orders[i]);
+                            }
+                        }
+                        return t_orders;
+                    }
+                });
     },
 
     // get the list of orders associated to a table. FIXME: should be O(1)
