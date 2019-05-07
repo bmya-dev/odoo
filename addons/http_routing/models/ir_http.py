@@ -15,7 +15,7 @@ except ImportError:
 import odoo
 from odoo import api, models
 from odoo.addons.base.models.ir_http import RequestUID, ModelConverter
-from odoo.http import request
+from odoo.http import ALLOWED_DEBUG_MODES, request
 from odoo.tools import config, ustr, pycompat
 
 from ..geoipresolver import GeoIPResolver
@@ -349,6 +349,11 @@ class IrHttp(models.AbstractModel):
                 cls._auth_method_public()
         except Exception as e:
             return cls._handle_exception(e)
+
+        # Store URL debug mode (might be empty) into session
+        if 'debug' in request.httprequest.args:
+            debug_mode = request.httprequest.args.get('debug')
+            request.session.debug = debug_mode if debug_mode in ALLOWED_DEBUG_MODES else True
 
         # For website routes (only), add website params on `request`
         cook_lang = request.httprequest.cookies.get('frontend_lang')

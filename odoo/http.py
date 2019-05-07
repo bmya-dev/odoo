@@ -64,6 +64,8 @@ STATIC_CACHE = 60 * 60 * 24 * 7
 # To remove when corrected in Babel
 babel.core.LOCALE_ALIASES['nb'] = 'nb_NO'
 
+ALLOWED_DEBUG_MODES = [False, None, '', '1', 'assets', 'tests']
+
 #----------------------------------------------------------
 # RequestHandler
 #----------------------------------------------------------
@@ -348,18 +350,20 @@ class WebRequest(object):
     @property
     def debug(self):
         """ Indicates whether the current request is in "debug" mode
+            Debug mode is stored in session and can be activated with an URL
+            query string `debug=<mode>` where mode is either:
+            - 'tests' to load tests assets
+            - 'assets' to load assets non minified
+            - any other truthy value to enable simple debug mode (to show some
+              technical feature, to show complete traceback in frontend error..)
+            - an empty value to disable debug mode
         """
-        debug = 'debug' in self.httprequest.args
-        if debug and self.httprequest.args.get('debug') == 'assets':
-            debug = 'assets'
-
-        # check if request from rpc in debug mode
-        if not debug:
-            debug = self.httprequest.environ.get('HTTP_X_DEBUG_MODE')
-
-        if not debug and self.httprequest.referrer:
-            debug = 'debug' in urls.url_parse(self.httprequest.referrer).decode_query()
-        return debug
+        if 'debug' in self.httprequest.args:
+            debug = self.httprequest.args.get('debug')
+        else:
+            debug = self.session.debug
+        print('Are we in debug mode? [%s]' % debug + ' session.debug? [%s]' % self.session.get('debug'))
+        return debug if debug in ALLOWED_DEBUG_MODES else True
 
     @contextlib.contextmanager
     def registry_cr(self):
@@ -1049,6 +1053,9 @@ class OpenERPSession(werkzeug.contrib.sessions.Session):
         self.setdefault("login", None)
         self.setdefault("session_token", None)
         self.setdefault("context", {})
+        # Force tests debug mode when test mode enabled to load 'assets_tests'
+        test_mode = odoo.tools.config['test_enable'] or odoo.tools.config['test_file']
+        self.setdefault("debug", 'tests' if test_mode else False)
 
     def get_context(self):
         """
