@@ -231,7 +231,7 @@ QUnit.module('web_editor', {}, function () {
 
             // load static xml file (dialog, media dialog, unsplash image widget)
             await defMediaDialog;
-            await testUtils.dom.click($('.modal #editor-media-image .o_image:first'));
+            await testUtils.dom.click($('.modal #editor-media-image .o_existing_attachment_cell:first'));
             await testUtils.dom.click($('.modal .modal-footer button.btn-primary'));
 
             var $editable = form.$('.oe_form_field[name="body"] .note-editable');
