@@ -102,11 +102,7 @@
 
     <!-- File choosing part of the Media Dialog -->
     <t t-name="wysiwyg.widgets.file">
-        <t t-set="iframeName" t-value="_.uniqueId('fileframe-')"/>
-        <form method="POST"
-            action="/web_editor/attachment/add"
-            enctype="multipart/form-data"
-            t-att-target="iframeName">
+        <form>
             <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
             <input type="hidden" name="filters" t-att-value="widget.options.firstFilters.join('_')"/>
             <input t-if="widget.options.res_id" type="hidden" name="res_id" t-att-value="widget.options.res_id"/>
@@ -120,7 +116,6 @@
                     <span><i>All attachments have been loaded</i></span>
                 </div>
             </div>
-            <iframe class="o_file_upload_iframe d-none" t-att-name="iframeName"/>
         </form>
     </t>
 
@@ -163,12 +158,10 @@
             <t t-set="searchPlaceholder">Search an image</t>
             <t t-set="urlWarningTitle">The URL does not contain any image. The file will be added in the document section.</t>
             <t t-set="alternateUpload">
-                <button class="btn btn-primary dropdown-toggle dropdown-toggle-split o_media_optimization" data-toggle="dropdown" type="button">
-                    <span class="sr-only">Alternate Upload</span>
+                <button class="btn btn-primary o_we_advanced_upload" type="button" title="Advanced Upload">
+                    <i class="fa fa-cog"/>
+                    <span class="sr-only">Advanced Upload</span>
                 </button>
-                <div class="dropdown-menu" role="menu">
-                    <button type="button" role="menuitem" class="dropdown-item o_upload_media_button_no_optimization">Upload image without optimization</button>
-                </div>
             </t>
         </t>
     </t>
@@ -201,6 +194,54 @@
                 </div>
             </div>
         </div>
+    </t>
+
+    <t t-name="wysiwyg.widgets.image.preview">
+        <form>
+            <div class="row">
+                <div id="o_we_config_column" class="col-lg-6">
+                    <div class="form-group">
+                        <label for="o_we_filename" style="font-size: 1rem;">Filename</label>
+                        <input type="text" class="form-control" id="o_we_filename" name="filename" aria-describedby="filenameHelp" t-att-value="widget.attachment.name"/>
+                        <small id="filenameHelp" class="form-text text-muted">Give a relevant name to your file to optimize search engine results.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="o_we_width" style="font-size: 1rem;">Width (in px)</label>
+                        <input type="number" class="form-control" id="o_we_width" name="width" aria-describedby="widthHelp" min="0" t-att-max="widget.attachment.width" t-att-value="widget.optimizedWidth"/>
+                        <div class="btn-group btn-group-sm mt-2" role="group" aria-label="Sizes">
+                            <t t-foreach="widget.widthRadios" t-as="widthRadio">
+                                <button t-attf-class="btn btn-link o_we_width_preset{{ widthRadio.disabled ? ' disabled' : '' }}" t-att-data-width="widthRadio.width" t-esc="widthRadio.text"/>
+                            </t>
+                        </div>
+                        <small id="widthHelp" class="form-text text-muted">Reduce the size as much as possible to increase the speed and performance of your website.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="o_we_quality_input" style="font-size: 1rem;">Quality</label>
+                        <div class="form-row">
+                            <div class="col-sm-10">
+                                <input type="range" class="custom-range js_quality_range" id="quality_range" name="quality_range" min="1" max="100" aria-describedby="qualityHelp" t-att-value="widget.defaultQuality"/>
+                            </div>
+                            <div class="col-sm-2">
+                                <input type="number" class="form-control" id="o_we_quality_input" name="quality" min="1" max="100" aria-describedby="qualityHelp" t-att-value="widget.defaultQuality"/>
+                            </div>
+                        </div>
+                        <small id="qualityHelp" class="form-text text-muted">Reduce the quality as much as possible to increase the speed and performance of your website.</small>
+                    </div>
+
+                    <p id="o_we_preview_error" class="alert alert-danger d-none mt-2"/>
+                </div>
+
+                <div id="o_we_preview_column" class="col-lg-6">
+                    <h3>Preview with the current settings</h3>
+                    <p>Current Size: <span class="js_current_size"></span> (smaller is better)</p>
+                    <div class="mw-100" style="max-height: 400px; overflow: auto;">
+                        <img class="img js_preview_image" alt="Image Preview"/>
+                    </div>
+                </div>
+            </div>
+        </form>
     </t>
 
     <t t-name="wysiwyg.widgets.image.existing.attachments">
