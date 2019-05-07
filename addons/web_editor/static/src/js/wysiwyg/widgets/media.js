@@ -217,6 +217,7 @@ var FileWidget = SearchWidget.extend({
         }).then(function (attachments) {
             self.attachments = _.chain(attachments)
                 .sortBy(function (r) {
+                    // TODO SEB maybe we should make a route that takes care of this
                     if (_.any(self.options.firstFilters, function (filter) {
                         var regex = new RegExp(filter, 'i');
                         return r.name.match(regex) || r.datas_fname && r.datas_fname.match(regex);
@@ -511,6 +512,7 @@ var FileWidget = SearchWidget.extend({
             // upload one file at a time
             var promiseUpload = uploadMutex.exec(function () {
                 utils.getDataURLFromFile(file).then(function (result) {
+                    // TODO SEB create a placeholder while it is uploading
                     return self._rpc({
                         route: '/web_editor/attachment/add_datas',
                         params: {
