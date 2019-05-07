@@ -15,6 +15,6 @@ class View(models.Model):
 
     view_id = fields.Many2one('ir.ui.view', 'Document Template', required=True)
 
+    name = fields.Char()
     primary_color = fields.Char(string="Default primary color")
     secondary_color = fields.Char(string="Default secondary color")
-    
