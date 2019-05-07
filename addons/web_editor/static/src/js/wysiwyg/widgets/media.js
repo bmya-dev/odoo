@@ -45,7 +45,7 @@ var MediaWidget = Widget.extend({
      * Saves the currently configured media on the target media.
      *
      * @abstract
-     * @returns {*}
+     * @returns {Promise}
      */
     save: function () {},
 
@@ -184,6 +184,9 @@ var FileWidget = SearchWidget.extend({
     //--------------------------------------------------------------------------
 
     /**
+     * Saves the currently selected image on the target media. If new files are
+     * currently being added, delays the save until all files have been added.
+     *
      * @override
      */
     save: function () {
@@ -397,16 +400,17 @@ var FileWidget = SearchWidget.extend({
     },
     /**
      * @private
+     * @returns {Promise}
      */
     _save: function () {
         var self = this;
-            return this.images;
         if (this.options.multiImages) {
+            return Promise.resolve(this.images);
         }
 
         var img = this.images[0];
         if (!img) {
-            return this.media;
+            return Promise.resolve(this.media);
         }
 
         var prom;
@@ -453,11 +457,6 @@ var FileWidget = SearchWidget.extend({
             var style = self.style;
             if (style) {
                 self.$media.css(style);
-            }
-
-            if (self.options.onUpload) {
-                // We consider that when selecting an image it is as if we upload it in the html content.
-                self.options.onUpload([img]);
             }
 
             // Remove crop related attributes
@@ -835,7 +834,7 @@ var IconWidget = SearchWidget.extend({
             class: _.compact(finalClasses).join(' '),
             style: style || null,
         });
-        return this.media;
+        return Promise.resolve(this.media);
     },
     /**
      * @override
@@ -993,7 +992,7 @@ var VideoWidget = MediaWidget.extend({
             );
             this.media = this.$media[0];
         }
-        return this.media;
+        return Promise.resolve(this.media);
     },
 
     //--------------------------------------------------------------------------
