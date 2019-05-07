@@ -20,6 +20,7 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
     template: 'reconciliation.statement',
     events: {
         'click div:first h1.statement_name': '_onClickStatementName',
+        'click button.import_to_suspense': '_onClickImportStatement',
         "click *[rel='do_action']": "_onDoAction",
         'click button.js_load_more': '_onLoadMore',
         'blur .statement_name_edition > input': '_onValidateName',
@@ -174,6 +175,23 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
             this.$('.statement_name_edition input').focus();
         }
     },
+
+    /**
+     * on click on the "import to suspense account" this method open the wizard.
+     * When the wizard close, reload the main view to shows the rainbowman.
+     * @private
+     */
+    _onClickImportStatement: function(){
+        var self = this;
+        this.do_action("account.action_account_bank_statement_to_suspense", {
+            additional_context: {
+                res_ids: _.map(this.model.statement.lines, function(o){ return o.st_line.id })
+            },
+            on_close: function() {
+                self.trigger_up('reload');
+            }
+        });
+    }, 
     /**
      * @private
      * Click on close bank statement button, this will

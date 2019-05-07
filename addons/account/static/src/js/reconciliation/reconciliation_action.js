@@ -110,9 +110,28 @@ var StatementAction = AbstractAction.extend({
         this.model.reload()
             .then(function() {
                 self.$('.o_reconciliation_lines').html('');
-                self._renderLines();
-                self._openFirstLine();
+                return self._renderLinesOrRainbow();
             });
+    },
+
+    _renderLinesOrRainbow: function() {
+        var self = this;
+        return self._renderLines().then(function() {
+            var initialState = self.renderer._initialState;
+            var valuenow = self.model.statement ? self.model.statement.value_min : initialState.valuenow;
+            var valuemax = self.model.statement ? self.model.statement.value_max : initialState.valuemax;
+            // No more lines to reconcile, trigger the rainbowman.
+            if(valuenow === valuemax){
+                initialState.valuenow = valuenow;
+                initialState.context = self.model.getContext();
+                self.renderer.showRainbowMan(initialState);
+            }else{
+                // Create a notification if some lines has been reconciled automatically.
+                if(initialState.valuenow > 0)
+                    self.renderer._renderNotifications(self.model.statement.notifications);
+                self._openFirstLine();
+            }
+        });
     },
 
     /**
@@ -126,19 +145,7 @@ var StatementAction = AbstractAction.extend({
         var sup = this._super;
 
         return this.renderer.prependTo(self.$('.o_form_sheet')).then(function() {
-            return self._renderLines().then(function() {
-                // No more lines to reconcile, trigger the rainbowman.
-                var initialState = self.renderer._initialState;
-                if(initialState.valuenow === initialState.valuemax){
-                    initialState.context = self.model.getContext();
-                    self.renderer.showRainbowMan(initialState);
-                }else{
-                    // Create a notification if some lines has been reconciled automatically.
-                    if(initialState.valuenow > 0)
-                        self.renderer._renderNotifications(self.model.statement.notifications);
-                    self._openFirstLine();
-                }
-
+            return self._renderLinesOrRainbow().then(function() {
                 return sup.apply(self, args);
             });
         });
