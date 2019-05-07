@@ -161,6 +161,9 @@ var FileWidget = SearchWidget.extend({
 
         // If there is already an attachment on the target, select by default
         // that attachment if it is among the loaded images.
+        // TODO SEB improve this to also work for product image for example,
+        // or any image where the url is not the attachment url but a field
+        // for example based on res_id, checksum, etc.
         var o = {
             url: null,
             alt: null,
@@ -213,12 +216,15 @@ var FileWidget = SearchWidget.extend({
         }).then(function (attachments) {
             self.attachments = _.chain(attachments)
                 .filter(function (r) {
+                    // TODO SEB do this in the domain
                     return (r.type === "binary" || r.url && r.url.length > 0);
                 })
                 .uniq(function (r) {
+                    // TODO SEB try to do this in the domain
                     return (r.url || r.id);
                 })
                 .sortBy(function (r) {
+                    // TODO SEB maybe we should make a route that takes care of this
                     if (_.any(self.options.firstFilters, function (filter) {
                         var regex = new RegExp(filter, 'i');
                         return r.name.match(regex) || r.datas_fname && r.datas_fname.match(regex);
@@ -355,6 +361,7 @@ var FileWidget = SearchWidget.extend({
      * @private
      */
     _renderImages: function (withEffect) {
+        // TODO SEB filter out mimetype in the image widget: /gif|jpe|jpg|png/.test($div.data('mimetype'))
         var attachments = _(this.attachments).slice(0, this._getNumberOfAttachmentsToDisplay());
 
         this.$errorText.empty();

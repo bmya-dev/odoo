@@ -126,6 +126,7 @@
 
     <t t-name="wysiwyg.widgets.files.submenu">
         <div class="form-inline align-items-center py-4">
+            <!-- TODO SEB multiple should only be set if multi image is set ?? -->
             <input type="file" class="d-none o_file_input" name="upload" t-att-accept="widget.options.accept" multiple="multiple"/>
             <input type="hidden" name="disable_optimization" value=""/>
 
