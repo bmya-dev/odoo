@@ -175,24 +175,42 @@
                 <form class="o_company_document_layout">
                     <group>
                         <group>
+                            <field name="report_layout_id" widget="radio" />
                             <field name="logo" widget="image" />
+                            <!-- TODO dominant colors -->
+                            <label for="o_preview_color" string="Colors" />
+                            <div class="o_preview_color">
+                                <field name="primary_color" widget="color" context="{'user_selected':True}" />
+                                <field name="secondary_color" widget="color" context="{'user_selected':True}" />
+                                <div class="o_preview_reset_link">
+                                    <!-- <i class="fa fa-arrow-right"></i> -->
+                                    <label for="reset_link" string="➜ Reset to default" />
+                                </div>
+                                <!-- <button type="object" name="reset_colors" class="btn btn-link">
+                                    <i class="fa fa-fw o_button_icon fa-arrow-right"></i>
+                                    <span>Reset to default</span>
+                                </button>  -->
+                            </div>
+                                
+                            <field name="font" widget="font" />
+
                             <field name="report_header"  widget="char" placeholder="e.g. Global Business Solutions" />
                             <field name="report_footer" string="Footer" placeholder="e.g. Opening hours, bank accounts (one per line)" />
                             <field name="paperformat_id" widget="selection" />
-                            <field name="external_report_layout_id" widget="radio" domain="[('key', 'ilike', 'external_layout_')]" />
-                            <field name="font" widget="font" />
-                            <field name="primary_color" widget="color" context="{'user_selected':True}" />
-                            <field name="secondary_color" widget="color" context="{'user_selected':True}" />
-                            <!-- TODO style the label -->
-                            <label for="reset_link" string="Reset to default" />
+
                             <field name="reset_link" invisible="1" />
                             <field name="use_default_colors" invisible="1" />
+                            <field name="external_report_layout_id" invisible="1" />
                         </group>
                         <group>
-                            <field name="preview" widget="html" nolabel="1" />
+                            <div>
+                                <field name="preview_logo" widget="image" readonly="1" nolabel="1" class="o_preview_logo" />
+                                <field name="preview" widget="html" class="o_preview_content" />
+                            </div>
                         </group>
                     </group>
                     <footer>
+                        <!-- TODO preview -->
                         <button special="save" string="Save"
                                 class="btn btn-primary" type="object" />
                         <button special="cancel" string="Cancel" />
@@ -202,3 +220,10 @@
         </record>
     </data>
 </odoo>
+
+<!-- 
+<button type="button" name="reset_colors" class="btn btn-link">
+    <i class="fa fa-fw o_button_icon fa-arrow-right"></i>
+    <span>Reset to default</span>
+</button> 
+-->

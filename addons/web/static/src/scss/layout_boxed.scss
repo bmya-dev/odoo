@@ -2,9 +2,6 @@
     color: gray('700');
     font-size: 15px;
 }
-#total strong {
-    color: black;
-}
 .o_boxed_header {
     border-bottom: 1px solid gray('200');
     img {
@@ -25,6 +22,9 @@
     }
 }
 .o_report_layout_boxed {
+    #total strong {
+        color: black;
+    }
     > h2 {
         text-transform: uppercase;
     }

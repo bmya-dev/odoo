@@ -2,14 +2,21 @@
     margin-top: 200px;
 }
 
-h2 {
-    color: $o-company-primary-color;
-}
-
-#informations strong {
-    color: $o-company-secondary-color;
-}
-
-#total strong {
-    color: $o-company-primary-color;
+.o_report_layout_standard {
+    h2 {
+        color: $o-company-primary-color;
+    }
+    
+    #informations strong {
+        color: $o-company-secondary-color;
+    }
+    
+    #total strong{
+        color: $o-company-primary-color;
+    }
+    table {
+        thead {
+            color: $o-company-secondary-color;
+        }
+    }
 }
