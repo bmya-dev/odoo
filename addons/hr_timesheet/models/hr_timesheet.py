@@ -11,6 +11,10 @@ from odoo.exceptions import UserError
 class AccountAnalyticLine(models.Model):
     _inherit = 'account.analytic.line'
 
+    def _read_group_project_ids(self, project, domain, order):
+        group = self.env.ref('project.group_project_user', False) or self.env.ref('base.group_user')
+        return self.env['project.project'].search([('user_id', 'in', group.users.ids)])
+
     @api.model
     def default_get(self, field_list):
         result = super(AccountAnalyticLine, self).default_get(field_list)
@@ -19,7 +23,7 @@ class AccountAnalyticLine(models.Model):
         return result
 
     task_id = fields.Many2one('project.task', 'Task', index=True)
-    project_id = fields.Many2one('project.project', 'Project', domain=[('allow_timesheets', '=', True)])
+    project_id = fields.Many2one('project.project', 'Project', domain=[('allow_timesheets', '=', True)], group_expand='_read_group_project_ids')
 
     employee_id = fields.Many2one('hr.employee', "Employee")
     department_id = fields.Many2one('hr.department', "Department", compute='_compute_department_id', store=True, compute_sudo=True)
