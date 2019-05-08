@@ -80,6 +80,12 @@ class CompanyDocumentLayout(models.TransientModel):
     @api.depends('logo', 'font')
     def _compute_preview(self):
         """ compute a qweb based preview to display on the wizard """
+        # FIXME the css rgba function doesn't support hex colors, therefore
+        # we use the #RRGGBBAA notation in the template.
+        # unfortunatly, not all browsers support this notation.
+        # to offer better support, we would need to either
+        # convert the colors from hex to decimal (e.g. "#008782" -> "0, 135, 130")
+        # OR store the colors directly in decimal
         for wizard in self:
             ir_qweb = wizard.env['ir.qweb']
             wizard.preview = ir_qweb.render('web.layout_preview', {

@@ -23,10 +23,16 @@
 }
 .o_report_layout_boxed {
     #total strong {
-        color: black;
+        color: $o-company-primary-color;
+    }
+    #informations strong {
+        color: $o-company-secondary-color;
     }
     > h2 {
         text-transform: uppercase;
+    }
+    h2 span {
+        color: $o-company-primary-color;
     }
     table {
         border: 1px solid gray('700');

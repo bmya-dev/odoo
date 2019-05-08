@@ -203,7 +203,7 @@
                             <field name="external_report_layout_id" invisible="1" />
                         </group>
                         <group>
-                            <div>
+                            <div class="o_preview_container">
                                 <field name="preview_logo" widget="image" readonly="1" nolabel="1" class="o_preview_logo" />
                                 <field name="preview" widget="html" class="o_preview_content" />
                             </div>

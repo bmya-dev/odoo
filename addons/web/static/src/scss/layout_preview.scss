@@ -1,4 +1,11 @@
 
+.o_preview_container {
+    border: 1px solid;
+    border-color: lightgray;
+    padding: 15px;
+    max-width: 450px;
+}
+
 .o_preview_logo img {
     padding-left: 5px;
     max-height: 45px;
@@ -24,7 +31,7 @@
             padding: 5px;
         }
         h2 {
-            padding-top: 30px;
+            padding-top: 50px;
         }
     }
     .article {
@@ -45,5 +52,108 @@
         .footer {
             border-bottom: 1px solid;
         }
-    } 
+    }
+    .o_preview_Clean_layout {
+        .article table {
+            border-bottom: 1px solid;
+            border-top: 1px solid;
+        }
+        thead th {
+            border-top: 1px solid;
+            text-transform: uppercase;
+        }
+    }
+    .o_preview_Standard_layout {
+        .o_subtotal, .o_total {
+            td {
+                border-top: 1px solid;
+            }
+        }
+    }
+    .o_preview_Boxed_layout {
+        table {
+            border: 1px solid gray('700');
+            // border-collapse: 
+            thead th {
+                border: 1px solid gray('700');
+                text-transform: uppercase;
+            }
+            tbody tr td {
+                border-right: 1px solid gray('700');
+            }
+        }
+        .o_subtotal td, .o_total td {
+            border-right: none;
+            border-top: 1px solid gray('700');
+        }
+        .o_total td {
+            strong, span {
+                color: white;
+            }
+        }
+    }
 }
+
+// #495057
+
+// table {
+//     tbody {
+//         color: gray('700');
+//         tr {
+//             td {
+//                 // remove border-top from standard layout
+//                 border-top: none;
+//                 border-right: 1px solid gray('700');
+//             }
+//             &.o_line_section td,
+//             &.o_line_note td,
+//             &.is-subtotal td {
+//                 border-top: 1px solid gray('700');
+//                 border-bottom: 1px solid gray('700');
+//             }
+//             &.o_line_section td {
+//                 background-color: rgba($o-company-primary-color, 0.7);
+//                 color: #fff;
+//             }
+//             &.is-subtotal,
+//             td.o_price_total {
+//                 background-color: rgba($o-company-secondary-color, 0.1);
+//             }
+//         }
+//     }
+// }
+// /* compat 12.0 */
+// .page > table:not(.o_main_table) tr td:last-child {
+//     background-color: gray('200');
+// }
+// /* compat 12.0 */
+// .row:not(#total) > div > table tr:not(:first-child):not(:last-child) td:last-child {
+//     background-color: gray('200');
+// }
+// /*Total table*/
+// /* row div rule compat 12.0 */
+// .row > div > table,
+// div#total table {
+//     tr {
+//         &:first-child,
+//         &.o_subtotal {
+//             border-bottom: 1px solid gray('700');
+
+//             td:first-child {
+//                 border-right: none;
+//             }
+//         }
+//         &:last-child td,
+//         &.o_total td {
+//             background-color: rgba($o-company-primary-color, 0.7);
+//             color: #fff;
+
+//             &:first-child {
+//                 border-right: none;
+//             }
+//         }
+//         &.o_total strong {
+//             color: white;
+//         } 
+//     }
+// }
