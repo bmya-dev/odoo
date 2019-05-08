@@ -26,6 +26,8 @@ class Event(models.Model):
 
     is_participating = fields.Boolean("Is Participating", compute="_compute_is_participating")
 
+    custom_banner_url = fields.Char("Banner URL")
+
     website_menu = fields.Boolean('Dedicated Menu',
         help="Creates menus Introduction, Location and Register on the page "
              " of the event on the website.", copy=False)
