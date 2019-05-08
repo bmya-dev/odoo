@@ -151,7 +151,7 @@ def local_redirect(path, query=None, keep_hash=False, forward_debug=True, code=3
         query = {}
     if request and request.debug:
         if forward_debug:
-            query['debug'] = ''
+            query['debug'] = request.debug
         else:
             query['debug'] = None
     if query:

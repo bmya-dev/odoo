@@ -497,12 +497,6 @@ class Home(http.Controller):
         if not odoo.tools.config['list_db']:
             values['disable_database_manager'] = True
 
-        # otherwise no real way to test debug mode in template as ?debug =>
-        # values['debug'] = '' but that's also the fallback value when
-        # missing variables in qweb
-        if 'debug' in values:
-            values['debug'] = True
-
         response = request.render('web.login', values)
         response.headers['X-Frame-Options'] = 'DENY'
         return response
@@ -1538,8 +1532,7 @@ class Apps(http.Controller):
             action['views'] = [(False, u'form')]
 
         sakey = Session().save_session_action(action)
-        debug = '?debug' if req.debug else ''
-        return werkzeug.utils.redirect('/web{0}#sa={1}'.format(debug, sakey))
+        return werkzeug.utils.redirect('/web#sa={1}'.format(sakey))
 
 
 class ReportController(http.Controller):

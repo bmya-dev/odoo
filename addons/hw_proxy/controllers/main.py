@@ -101,6 +101,7 @@ class Proxy(http.Controller):
             <p>The list of connected USB devices as seen by the IoTBox</p>
         """
         if debug is None:
+            # TODO check
             resp += """(<a href="/hw_proxy/status?debug">debug version</a>)"""
         devices = subprocess.check_output("lsusb").decode('utf-8').split('\n')
         count   = 0
