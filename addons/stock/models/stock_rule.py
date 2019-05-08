@@ -267,6 +267,8 @@ class StockRule(models.Model):
             'date': date_expected,
             'date_expected': date_expected,
             'propagate': self.propagate,
+            'propagate_date': self.propagate_date,
+            'propagate_date_minimum_delta': self.propagate_date_minimum_delta,
             'description_picking': product_id._get_description(self.picking_type_id),
             'priority': values.get('priority', "1"),
         }
