@@ -464,8 +464,10 @@
                             <td>2.000</td>
                             <td>190.00</td>
                             <t t-if="company.report_layout_id.name == 'Boxed'">
-                                <!-- FIXME the #RRGGBBAA notation isn't suported by all modern browsers -->
-                                <td class="o_price_total" t-attf-style="background-color: {{company.secondary_color}}19;">$ 380.00</td>
+                                <!-- fallback to full opacity when browser does not support RRGGBBAA notation -->
+                                <!-- TODO test -->
+                                <td class="o_price_total" 
+                                    t-attf-style="background-color: {{company.secondary_color}};background-color: {{company.secondary_color}}19;">$ 380.00</td>
                             </t>
                             <t t-else="else">
                                 <td class="o_price_total">$ 380.00</td>
@@ -476,7 +478,8 @@
                             <td>1.000</td>
                             <td>1250.00</td>
                             <t t-if="company.report_layout_id.name == 'Boxed'">
-                                <td class="o_price_total" t-attf-style="background-color: {{company.secondary_color}}19;">$ 1250.00</td>
+                                <td class="o_price_total" 
+                                    t-attf-style="background-color: {{company.secondary_color}};background-color: {{company.secondary_color}}19;">$ 1250.00</td>
                             </t>
                             <t t-else="else">
                                 <td class="o_price_total">$ 1250.00</td>
@@ -498,10 +501,10 @@
                                 </tr>
                                 <tr class="o_total">
                                     <t t-if="company.report_layout_id.name == 'Boxed'">
-                                        <td t-attf-style="background-color: {{company.primary_color}}D0;">
+                                        <td t-attf-style="background-color: {{company.primary_color}};background-color: {{company.primary_color}}D0;">
                                             <strong>Total</strong>
                                         </td>
-                                        <td t-attf-style="background-color: {{company.primary_color}}D0;">
+                                        <td t-attf-style="background-color: {{company.primary_color}};background-color: {{company.primary_color}}D0;">
                                             <span>$ 1630.00</span>
                                         </td>
                                     </t>
