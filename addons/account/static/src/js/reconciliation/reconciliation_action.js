@@ -114,6 +114,9 @@ var StatementAction = AbstractAction.extend({
     reload: function() {
         // On reload destroy all rendered line widget, reload data and then rerender widget
         var self = this;
+        $('[autocomplete]').removeAttr('autocomplete')
+
+        self.$('.o_reconciliation_lines *').off('remove');
         _.each(this.widgets, function(widget) {
             widget.destroy();
         });
@@ -240,7 +243,9 @@ var StatementAction = AbstractAction.extend({
     _forceUpdate: function() {
         var self = this;
         _.each(this.model.lines, function(handle) {
-            self._getWidget(handle['handle']).update(handle);
+            var widget = self._getWidget(handle['handle']);
+            if (widget)
+                widget.update(handle);
         })
     },
     /**

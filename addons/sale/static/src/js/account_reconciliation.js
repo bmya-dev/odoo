@@ -22,7 +22,16 @@ LineRenderer.include({
 
     update: function (state) {
         this._super(state);
-        this.$('[href*="notebook_page_saleorder"]').click();
+
+        if (state.mode === 'match') {
+            this.$('.o_notebook li a').attr('aria-selected', false);
+            this.$('.o_notebook li a').removeClass('active');
+            this.$('.o_notebook .tab-content .tab-pane').removeClass('active');
+            this.$('.o_notebook li a[href*="notebook_page_saleorder"]').attr('aria-selected', true);
+            this.$('.o_notebook li a[href*="notebook_page_saleorder"]').addClass('active');
+            this.$('.o_notebook .tab-content .tab-pane[id*="notebook_page_saleorder"]').addClass('active');
+        }
+        // this.$('[href*="notebook_page_saleorder"]').click();
     },
 });
 

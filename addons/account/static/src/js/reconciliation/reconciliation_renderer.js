@@ -19,8 +19,7 @@ var _t = core._t;
 var StatementRenderer = Widget.extend(FieldManagerMixin, {
     template: 'reconciliation.statement',
     events: {
-        'click button.import_to_suspense': '_onClickImportStatement',
-        "click *[rel='do_action']": "_onDoAction",
+        'click *[rel="do_action"]': '_onDoAction',
         'click button.js_load_more': '_onLoadMore',
     },
     /**
@@ -59,6 +58,7 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
         }
 
         $(document).on('keydown', self._onKeyDown);
+        $(document).on('click', 'button.import_to_suspense', self._onClickImportStatement.bind(self));
         return Promise.all(defs);
     },
     /**
@@ -70,7 +70,7 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
     },
 
     _onKeyDown: function (e) {
-        if (e.target.classList.contains('o_input')) {
+        if (e.target.classList.contains('o_input') || e.target.classList.contains('o_searchview_input')) {
             // do not interfere with the input widgets
             return
         }
@@ -201,7 +201,7 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
         var self = this;
         this.do_action("account.action_account_bank_statement_to_suspense", {
             additional_context: {
-                res_ids: _.map(this.model.statement.lines, function(o){ return o.st_line.id })
+                res_ids: _.map(self.model.statement.lines, function(o){ return o.st_line.id })
             },
             on_close: function() {
                 self.trigger_up('reload');
@@ -383,6 +383,18 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
             $panel.css('transition', '');
         });
         this.$el.data('mode', state.mode).attr('data-mode', state.mode);
+        this.$('.o_notebook li a').attr('aria-selected', false);
+        this.$('.o_notebook li a').removeClass('active');
+        this.$('.o_notebook .tab-content .tab-pane').removeClass('active');
+        if (state.mode === 'match') {
+            this.$('.o_notebook li a[href*="notebook_page_matching"]').attr('aria-selected', true);
+            this.$('.o_notebook li a[href*="notebook_page_matching"]').addClass('active');
+            this.$('.o_notebook .tab-content .tab-pane[id*="notebook_page_matching"]').addClass('active');
+        } else if (state.mode === 'create') {
+            this.$('.o_notebook li a[href*="notebook_page_misc"]').attr('aria-selected', true);
+            this.$('.o_notebook li a[href*="notebook_page_misc"]').addClass('active');
+            this.$('.o_notebook .tab-content .tab-pane[id*="notebook_page_misc"]').addClass('active');
+        }
         this.$('.create, .match').each(function () {
             $(this).removeAttr('style');
         });
@@ -414,6 +426,7 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
         var recs_count = stateMvLines.length > 0 ? stateMvLines[0].recs_count : 0;
         var remaining = recs_count - stateMvLines.length;
         var $mv_lines = this.$('.match table tbody').empty();
+        this.$('.o_notebook li a[href*="notebook_page_matching"]').toggleClass('d-none', recs_count === 0);
 
         _.each(stateMvLines, function (line) {
             var $line = $(qweb.render("reconciliation.line.mv_line", {'line': line, 'state': state}));
