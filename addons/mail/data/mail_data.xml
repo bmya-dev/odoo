@@ -314,6 +314,17 @@
 </p>
         </template>
 
+        <template id="message_add_new_follower">
+<p style="margin: 0px;">
+    <t t-esc="invite_message" t-options='{"widget": "html"}'/>
+</p>
+<p style="margin-top: 24px; margin-bottom: 16px;">
+    <a t-att-href="'/mail/view?model=%s&amp;res_id=%s' % (res_model, res_id)" style="background-color:#875A7B; padding: 10px; text-decoration: none; color: #fff; border-radius: 5px;">
+        View <t t-esc="model_description or 'document'"/>
+    </a>
+</p>
+        </template>
+
         <template id="message_activity_done">
 <div>
     <p>

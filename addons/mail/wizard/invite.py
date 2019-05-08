@@ -48,7 +48,6 @@ class Invite(models.TransientModel):
 
     @api.multi
     def add_followers(self):
-        email_from = self.env['mail.message']._get_default_from()
         for wizard in self:
             Model = self.env[wizard.res_model]
             document = Model.browse(wizard.res_id)
@@ -61,22 +60,24 @@ class Invite(models.TransientModel):
             model_name = self.env['ir.model']._get(wizard.res_model).display_name
             # send an email if option checked and if a message exists (do not send void emails)
             if wizard.send_mail and wizard.message and not wizard.message == '<br>':  # when deleting the message, cleditor keeps a <br>
-                message = self.env['mail.message'].create({
-                    'subject': _('Invitation to follow %s: %s') % (model_name, document.display_name),
-                    'body': wizard.message,
-                    'record_name': document.display_name,
-                    'email_from': email_from,
-                    'reply_to': email_from,
-                    'model': wizard.res_model,
+                values = {
+                    'res_model': wizard.res_model,
                     'res_id': wizard.res_id,
-                    'no_auto_thread': True,
-                    'add_sign': True,
-                })
-                self.env['res.partner'].with_context(auto_delete=True)._notify(
-                    message,
-                    [{'id': pid, 'share': True, 'notif': 'email', 'type': 'customer', 'groups': []} for pid in new_partners.ids],
-                    document,
-                    force_send=True,
-                    send_after_commit=False)
-                message.unlink()
+                    'model_description': model_name,
+                    'invite_message': wizard.message
+                }
+                body_template = self.env.ref('mail.message_add_new_follower')
+                assignation_msg = body_template.render(values, engine='ir.qweb', minimal_qcontext=True)
+                assignation_msg = self.env['mail.thread']._replace_local_links(assignation_msg)
+
+                self.env['mail.thread'].message_notify(
+                    partner_ids=new_partners.ids,
+                    body=assignation_msg,
+                    subject=_('Invitation to follow %s: %s') % (model_name, document.display_name),
+                    message_type='email',
+                    record_name=document.display_name,
+                    model_description=model_name,
+                    no_auto_thread=True,
+                    add_sign=True,
+                )
         return {'type': 'ir.actions.act_window_close'}
