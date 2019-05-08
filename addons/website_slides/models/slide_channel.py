@@ -110,15 +110,15 @@ class Channel(models.Model):
         ('most_viewed', 'Most Viewed')],
         string="Featuring Policy", default='latest', required=True)
     access_token = fields.Char("Security Token", copy=False, default=_default_access_token)
-    nbr_presentation = fields.Integer('Number of Presentations', compute='_compute_slides_statistics', store=True)
-    nbr_document = fields.Integer('Number of Documents', compute='_compute_slides_statistics', store=True)
-    nbr_video = fields.Integer('Number of Videos', compute='_compute_slides_statistics', store=True)
-    nbr_infographic = fields.Integer('Number of Infographics', compute='_compute_slides_statistics', store=True)
-    nbr_webpage = fields.Integer("Number of Webpages", compute='_compute_slides_statistics', store=True)
+    nbr_presentation = fields.Integer('Presentations', compute='_compute_slides_statistics', store=True)
+    nbr_document = fields.Integer('Documents', compute='_compute_slides_statistics', store=True)
+    nbr_video = fields.Integer('Videos', compute='_compute_slides_statistics', store=True)
+    nbr_infographic = fields.Integer('Infographics', compute='_compute_slides_statistics', store=True)
+    nbr_webpage = fields.Integer("Webpages", compute='_compute_slides_statistics', store=True)
     nbr_quiz = fields.Integer("Number of Quizs", compute='_compute_slides_statistics', store=True)
-    total_slides = fields.Integer('# Slides', compute='_compute_slides_statistics', store=True, oldname='total')
-    total_views = fields.Integer('# Views', compute='_compute_slides_statistics', store=True)
-    total_votes = fields.Integer('# Votes', compute='_compute_slides_statistics', store=True)
+    total_slides = fields.Integer('Content', compute='_compute_slides_statistics', store=True, oldname='total')
+    total_views = fields.Integer('Visits', compute='_compute_slides_statistics', store=True)
+    total_votes = fields.Integer('Votes', compute='_compute_slides_statistics', store=True)
     total_time = fields.Float('# Hours', compute='_compute_slides_statistics', digits=(10, 4), store=True)
     # configuration
     allow_comment = fields.Boolean(
@@ -127,7 +127,7 @@ class Channel(models.Model):
              " * like content and post comments on documentation course;\n"
              " * post comment and review on training course;")
     publish_template_id = fields.Many2one(
-        'mail.template', string='Published Template',
+        'mail.template', string='New Content Email',
         help="Email template to send slide publication through email",
         default=lambda self: self.env['ir.model.data'].xmlid_to_res_id('website_slides.slide_template_published'))
     share_template_id = fields.Many2one(
@@ -368,6 +368,14 @@ class Channel(models.Model):
         if len(self) == 1:
             action['context'] = {'default_channel_id': self.id}
 
+        return action
+
+    @api.multi
+    def action_redirect_to_content(self):
+        action = self.env.ref('website_slides.action_slides_slides').read()[0]
+        action['view_mode'] = 'tree'
+        action['domain'] = [('channel_id', 'in', self.ids)]
+        action['context'] = {'search_default_category': 1}
         return action
 
     @api.multi
