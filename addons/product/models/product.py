@@ -256,11 +256,11 @@ class ProductProduct(models.Model):
             self.image_medium = resized_images['image_medium']
             self.image_small = resized_images['image_small']
             self.image = resized_images['image']
-        if not self.image_medium:
+        if self.product_variant_count == 1 or not self.image_medium:
             self.image_medium = self.product_tmpl_id.image_medium
-        if not self.image_small:
+        if self.product_variant_count == 1 or not self.image_small:
             self.image_small = self.product_tmpl_id.image_small
-        if not self.image:
+        if self.product_variant_count == 1 or not self.image:
             self.image = self.product_tmpl_id.image
 
     @api.one
