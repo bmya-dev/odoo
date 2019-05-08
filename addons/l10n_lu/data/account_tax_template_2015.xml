@@ -1,6 +1,6 @@
 <odoo>
 	<record id="lu_2011_tax_AB-EC-0" model="account.tax.template">
-		<field name="sequence">101</field>
+		<field name="sequence">171</field>
         <field name="description">AB-EC-0</field>
         <field name="name">Purchase Goods Exempted - Extra-Community</field>
         <field name="amount">0</field>
@@ -757,7 +757,7 @@
 	</record>
 
 	<record id="lu_2015_tax_AB-PA-17" model="account.tax.template">
-		<field name="sequence">171</field>
+		<field name="sequence">101</field>
         <field name="description">AB-PA-17</field>
         <field name="name">Purchase Goods 17% - Country</field>
         <field name="amount">17</field>
@@ -4522,7 +4522,7 @@
 	</record>
 
 	<record id="lu_2015_tax_V-ART-43_60b" model="account.tax.template">
-		<field name="sequence">479</field>
+		<field name="sequence">489</field>
         <field name="description">V-ART-43_60b</field>
         <field name="name">Sales - Other Exemptions (Article 43 and 60 bis)</field>
         <field name="amount">0</field>
@@ -4790,7 +4790,7 @@
 	</record>
 
 	<record id="lu_2015_tax_VB-PA-17" model="account.tax.template">
-		<field name="sequence">489</field>
+		<field name="sequence">479</field>
         <field name="description">VB-PA-17</field>
         <field name="name">Sales Goods 17% - Country</field>
         <field name="amount">17</field>
