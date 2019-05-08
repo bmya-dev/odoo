@@ -365,6 +365,7 @@
     </template>
 
     <template id="web.layout" name="Web layout">&lt;!DOCTYPE html&gt;
+        <t t-set="debug_mode" t-value="request.session.debug"/>
         <html t-att="html_data or {}">
             <head>
                 <meta charset="utf-8"/>
@@ -377,12 +378,16 @@
                 <script type="text/javascript">
                     var odoo = {
                         csrf_token: "<t t-esc="request.csrf_token(None)"/>",
-                        debug: "<t t-esc="request.session.debug"/>",
+                        debug: "<t t-esc="debug_mode"/>",
                     };
                 </script>
 
                 <t t-raw="head or ''"/>
             </head>
+            <div t-if="debug_mode" class="o_debug_mode text-center text-white" t-att-debug_mode="debug_mode">
+                <t t-set="debug_mode_help" t-value="debug_mode in ['assets', 'tests'] and ' (%s)' % debug_mode"/>
+                Debug mode is activated<t t-esc="debug_mode_help"/>. <a href="?debug=" class="text-dark">Exit debug mode.</a>
+            </div>
             <body t-att-class="body_classname">
                 <t t-raw="0"/>
             </body>

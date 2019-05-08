@@ -83,3 +83,8 @@
 .o_debounce_disabled {
     pointer-events: none;
 }
+
+// Debug mode topbar
+body > .o_debug_mode {
+    background-color: #DC3D9D;
+}
