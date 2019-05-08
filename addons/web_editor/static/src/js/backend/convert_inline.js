@@ -334,6 +334,7 @@ function classToStyle($editable) {
             previousOutlookNodes.push($hack);
         }
         else if (node.nodeName === 'IMG' && $target.is('.mx-auto.d-block')) {
+            $target.attr('width', $target.outerWidth());
             $target.wrap('<p class="o_outlook_hack" style="text-align:center;margin:0"/>');
         }
         if (!$hack && previousOutlookNodes.length > 1) {
