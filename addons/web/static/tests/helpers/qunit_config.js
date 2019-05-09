@@ -104,6 +104,7 @@ QUnit.on('OdooAfterTestHook', function () {
         {tagName: 'DIV', attrToCompare: 'id', value: 'qunit'},
         {tagName: 'DIV', attrToCompare: 'id', value: 'qunit-fixture'},
         {tagName: 'SCRIPT', attrToCompare: 'id', value: ''},
+        {tagName: 'DIV', attrToCompare: 'className', value: 'o_debug_mode text-center text-white'},
         // shouldn't be in the body after a test but are tolerated:
         {tagName: 'DIV', attrToCompare: 'className', value: 'o_notification_manager'},
         {tagName: 'DIV', attrToCompare: 'className', value: 'tooltip fade bs-tooltip-auto'},
