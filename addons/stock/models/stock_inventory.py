@@ -176,17 +176,15 @@ class Inventory(models.Model):
         for line in serials:
             similar_quant = self.env['stock.quant'].search([
                 ('lot_id', '=', line.prod_lot_id.id),
-                ('location_id', '!=', line.location_id.id),
                 '|',
                 ('location_id.usage', 'not in', ('supplier', 'inventory', 'production')),
                 ('location_id.scrap_location', '=', True),
-                ('quantity', '>', 0)
+                ('quantity', '!=', 0)
             ])
             # Extract the quant to correct
             for sq in similar_quant:
                 related_lines = self.line_ids.filtered(
-                    lambda line: line.correction_line == 'warning' and
-                    line.prod_lot_id == sq.lot_id and
+                    lambda line: line.prod_lot_id == sq.lot_id and
                     line.location_id == sq.location_id and
                     line.partner_id == sq.owner_id and
                     line.package_id == sq.package_id
