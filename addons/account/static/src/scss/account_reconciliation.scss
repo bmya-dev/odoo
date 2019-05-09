@@ -1,8 +1,8 @@
 .progress-reconciliation {
-    width: 49vw;
     .progress-bar {
-        height: inherit;
-        background-color: $o-community-color; // FIXME probably supposed to be primary to be auto-adapted in enterprise ?
+        font-size: 1.08333333rem;
+        height: 14px;
+        background-color: $o-enterprise-color;
         span {
             display: contents;
         }

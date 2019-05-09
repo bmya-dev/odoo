@@ -47,7 +47,13 @@ class AccountReconciliation(models.AbstractModel):
                 payment_aml_rec,
                 datum.get('new_aml_dicts', []))
             processed_moves = (processed_moves | moves)
-        return {'moves': processed_moves.ids}
+        from pprint import pformat
+        import logging
+        _logger = logging.getLogger(__name__)
+        def print(a):
+            _logger.warning(pformat(a, width=236))
+        print(data)
+        return {'moves': processed_moves.ids, 'statement_line_ids': processed_moves.mapped('line_ids.statement_line_id').ids}
 
     @api.model
     def get_move_lines_for_bank_statement_line(self, st_line_id, partner_id=None, excluded_ids=None, search_str=False, offset=0, limit=None):

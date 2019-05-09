@@ -751,6 +751,17 @@ var StatementModel = BasicModel.extend({
                 line.reconciled = true;
                 self.valuenow++;
             }));
+
+            _.each(self.lines, function(other_line) {
+                if (other_line != line) {
+                    var filtered_prop = other_line.reconciliation_proposition.filter(p => !line.reconciliation_proposition.map(l => l.id).includes(p.id));
+                    if (filtered_prop.length != other_line.reconciliation_proposition.length) {
+                        other_line.need_update = true;
+                        other_line.reconciliation_proposition = filtered_prop;
+                    }
+                    self._computeLine(line);
+                }
+            })
         });
 
         return Promise.all(handlesPromises).then(function() {
@@ -1265,10 +1276,6 @@ var StatementModel = BasicModel.extend({
      */
     _validatePostProcess: function (data) {
         var self = this;
-        _.each(this.lines, function(line) {
-            line.reconciliation_proposition = line.reconciliation_proposition.filter(p => !data['moves'].includes(p.id));
-            self._computeLine(line);
-        })
         return Promise.resolve();
     },
 });

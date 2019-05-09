@@ -19,7 +19,6 @@ var StatementAction = AbstractAction.extend({
     contentTemplate: 'reconciliation',
     custom_events: {
         change_mode: '_onAction',
-        force_update: '_forceUpdate',
         change_filter: '_onAction',
         change_offset: '_onAction',
         change_partner: '_onAction',
@@ -115,16 +114,17 @@ var StatementAction = AbstractAction.extend({
         // On reload destroy all rendered line widget, reload data and then rerender widget
         var self = this;
 
-        self.$('.o_reconciliation_line').addClass('d-none'); // prevent the browser from recomputing css after each destroy for HUGE perf improvement on a lot of lines
+        self.$('.o_reconciliation_lines').addClass('d-none'); // prevent the browser from recomputing css after each destroy for HUGE perf improvement on a lot of lines
         _.each(this.widgets, function(widget) {
             widget.destroy();
         });
         this.widgets = [];
         this.model.reload()
             .then(function() {
-                self.$('.o_reconciliation_lines').html('');
+                // self.$('.o_reconciliation_lines').html('');
                 return self._renderLinesOrRainbow();
             });
+        self.$('.o_reconciliation_lines').removeClass('d-none');
     },
 
     _renderLinesOrRainbow: function() {
@@ -186,6 +186,7 @@ var StatementAction = AbstractAction.extend({
                 },
             });
             this.renderer.$progress = this.$pager;
+            $(this.renderer.$progress).parent().css('width', '100%').css('padding-left', '0');
         }
     },
 
@@ -243,8 +244,10 @@ var StatementAction = AbstractAction.extend({
         var self = this;
         _.each(this.model.lines, function(handle) {
             var widget = self._getWidget(handle['handle']);
-            if (widget)
+            if (widget && widget.need_update) {
                 widget.update(handle);
+                widget.need_update = false;
+            }
         })
     },
     /**

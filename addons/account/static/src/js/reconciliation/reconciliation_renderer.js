@@ -370,18 +370,6 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
         });
 
         // mode
-        this.$('.create, .match').each(function () {
-            var $panel = $(this);
-            $panel.css('-webkit-transition', 'none');
-            $panel.css('-moz-transition', 'none');
-            $panel.css('-o-transition', 'none');
-            $panel.css('transition', 'none');
-            $panel.css('max-height', $panel.height());
-            $panel.css('-webkit-transition', '');
-            $panel.css('-moz-transition', '');
-            $panel.css('-o-transition', '');
-            $panel.css('transition', '');
-        });
         this.$el.data('mode', state.mode).attr('data-mode', state.mode);
         this.$('.o_notebook li a').attr('aria-selected', false);
         this.$('.o_notebook li a').removeClass('active');
@@ -859,7 +847,6 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
      */
     _onValidate: function () {
         this.trigger_up('validate');
-        this.trigger_up('force_update');
     }
 });
 

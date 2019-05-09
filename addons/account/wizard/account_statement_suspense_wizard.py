@@ -36,7 +36,7 @@ class AccountStatementSuspenseWizard(models.TransientModel):
                     'analytic_tag_ids': [[6, 0, []]],
                     'account_id': self.account_id.id
                 }],
-                'partner_id': False,
+                'partner_id': line.partner_id.id,
                 'payment_aml_ids': [],
                 'counterpart_aml_dicts': [],
                 'to_check': True,
