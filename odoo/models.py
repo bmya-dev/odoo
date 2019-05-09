@@ -201,6 +201,13 @@ class NewId(object):
         )
 
 
+def origin_ids(ids):
+    """ Return the origin ids corresponding to ``ids``. Actual ids are returned
+        as is, and ids without origin are not returned.
+    """
+    return tuple((id_ or id_.origin) for id_ in ids if (id_ or id_.origin))
+
+
 IdType = (int, str, NewId)
 
 
@@ -5004,11 +5011,9 @@ Fields:
     @property
     def _origin(self):
         """ Return the actual records corresponding to ``self``. """
-        return self.browse([
-            id_ or id_.origin
-            for id_ in self._ids
-            if id_ or id_.origin
-        ])
+        ids = origin_ids(self._ids)
+        prefetch_ids = tools.lazy(origin_ids, self._prefetch_ids)
+        return self._browse(self.env, ids, prefetch_ids)
 
     #
     # Dirty flags, to mark record fields modified (in draft mode)
@@ -5511,22 +5516,17 @@ Fields:
         # prefetch x2many lines without data (for the initial snapshot)
         for name, subnames in nametree.items():
             if subnames and values.get(name):
-                # retrieve all ids in commands, and read the expected fields
+                # retrieve all ids in commands
                 line_ids = set()
                 for cmd in values[name]:
                     if cmd[0] in (1, 4):
                         line_ids.add(cmd[1])
                     elif cmd[0] == 6:
                         line_ids.update(cmd[2])
-                lines = self.browse()[name].browse(line_ids)
-                lines.read(list(subnames), load='_classic_write')
-                # copy values from lines to new lines
-                for line in lines:
-                    new_line = line.new(origin=line)
-                    new_line._cache.update({
-                        subname: line._cache[subname]
-                        for subname in subnames
-                    })
+                # build corresponding new lines, and prefetch fields
+                new_lines = self[name].browse(NewId(id_) for id_ in line_ids)
+                for subname in subnames:
+                    new_lines.mapped(subname)
 
         # create a new record with values, and attach ``self`` to it
         record = self.new(values, origin=self)

@@ -362,7 +362,9 @@ class TestPerformance(TransactionCase):
         records.invalidate_cache(['value'])
         with self.assertQueryCount(__system__=2, demo=2):
             records.mapped('value')
-        with self.assertQueryCount(__system__=0, demo=0):
+
+        records.invalidate_cache(['value'])
+        with self.assertQueryCount(__system__=2, demo=2):
             new_recs = records.browse(records.new(origin=record).id for record in records)
             new_recs.mapped('value')
 
