@@ -36,14 +36,12 @@ class TestSelfAccessRights(TestHrCommon):
 
     # Read hr.employee #
     def testReadSelfEmployee(self):
-        for f in self.protected_fields_emp:
-            with self.assertRaises(AccessError):
-                self.richard_emp.sudo(self.richard)[f]
+        with self.assertRaises(AccessError):
+            self.hubert_emp.sudo(self.richard).read(self.protected_fields_emp.keys())
 
     def testReadOtherEmployee(self):
-        for f in self.protected_fields_emp:
-            with self.assertRaises(AccessError):
-                self.hubert_emp.sudo(self.richard)[f]
+        with self.assertRaises(AccessError):
+            self.hubert_emp.sudo(self.richard).read(self.protected_fields_emp.keys())
 
     # Write hr.employee #
     def testWriteSelfEmployee(self):
@@ -62,9 +60,8 @@ class TestSelfAccessRights(TestHrCommon):
             self.richard.sudo(self.richard).read([f])  # should not raise
 
     def testReadOtherUserEmployee(self):
-        for f in self.self_protected_fields_user:
-            with self.assertRaises(AccessError, msg="Field %s should not be readable by other users" % f):
-                self.hubert.sudo(self.richard)[f]
+        with self.assertRaises(AccessError):
+            self.hubert.sudo(self.richard).read(self.self_protected_fields_user)
 
     # Write res.users #
     def testWriteSelfUserEmployeeSettingFalse(self):

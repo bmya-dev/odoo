@@ -136,35 +136,34 @@ class HrEmployeePrivate(models.Model):
 
     @api.multi
     def name_get(self):
-        # If user has not rights to read hr.employee, we forward the public name_get
-        if self.check_access_rights('read', raise_exception=False):
+        try:
             return super(HrEmployeePrivate, self).name_get()
-        return self.env['hr.employee.public'].browse(self.ids).name_get()
-
-    @api.model
-    def name_search(self, name='', args=None, operator='ilike', limit=100):
-        if self.check_access_rights('read', raise_exception=False):
-            return super(HrEmployeePrivate, self).name_search(name=name, args=args, operator=operator, limit=limit)
-        return self.env['hr.employee.public'].name_search(name=name, args=args, operator=operator, limit=limit)
-
-    @api.model
-    def search_read(self, domain=None, fields=None, offset=0, limit=None, order=None):
-        if self.check_access_rights('read', raise_exception=False):
-            return super(HrEmployeePrivate, self).search_read(domain=domain, fields=fields, offset=offset, limit=limit, order=order)
-        return self.env['hr.employee.public'].search_read(domain=domain, fields=fields, offset=offset, limit=limit, order=order)
+        except AccessError:
+            return self.env['hr.employee.public'].browse(self.ids).name_get()
 
     @api.multi
     def read(self, fields, load='_classic_read'):
-        if self.check_access_rights('read', raise_exception=False):
+        # We need to use this structure because we cannot simply check ir.rules
+        # Simply checking the access rights is not enough as it only considers
+        # ir.model.access which are simple booleans
+        # See _apply_ir_rules which adapts the query directly
+        try:
             return super(HrEmployeePrivate, self).read(fields, load=load)
-        public_fields = set(self.env['hr.employee.public']._fields.keys()).intersection(fields)
-        return self.env['hr.employee.public'].browse(self.ids).read(public_fields, load=load)
+        except AccessError:
+            public_fields = set(self.env['hr.employee.public']._fields.keys()).intersection(fields)
+            if not public_fields:
+                raise AccessError(_('All the fields you try to access are private but you cannot read private fields on employees'))
+            # We fill all the fields with False as a value in order to avoid crashing the web client
+            base = dict.fromkeys(fields, False)
+            return [{**base, **result} for result in self.env['hr.employee.public'].browse(self.ids).read(public_fields, load=load)]
 
     @api.model
-    def search(self, args, offset=0, limit=None, order=None, count=False):
-        if self.check_access_rights('read', raise_exception=False):
-            return super(HrEmployeePrivate, self).search(args, offset=offset, limit=limit, order=order, count=count)
-        return self.env['hr.employee.public'].search(args, offset=offset, limit=limit, order=order, count=count)
+    def _search(self, args, offset=0, limit=None, order=None, count=False, access_rights_uid=None):
+        """ We override the _search because it is the method that checks the access rights """
+        try:
+            return super(HrEmployeePrivate, self)._search(args, offset=offset, limit=limit, order=order, count=count, access_rights_uid=access_rights_uid)
+        except AccessError:
+            return self.env['hr.employee.public']._search(args, offset=offset, limit=limit, order=order, count=count, access_rights_uid=access_rights_uid)
 
     @api.constrains('pin')
     def _verify_pin(self):
