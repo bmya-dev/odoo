@@ -54,7 +54,6 @@ var ListRenderer = BasicRenderer.extend({
         this._super.apply(this, arguments);
         this.advancedColumnsEnabled = [];
         this.columnInvisibleFields = params.columnInvisibleFields;
-        this.addAdvancedDropdown = 'addAdvancedDropdown' in params ? params.addAdvancedDropdown : true;
         this.rowDecorations = _.chain(this.arch.attrs)
             .pick(function (value, key) {
                 return DECORATIONS.indexOf(key) >= 0;
@@ -189,7 +188,7 @@ var ListRenderer = BasicRenderer.extend({
      */
     _computeAdvancedColumns: function () {
         return _.filter(this.allColumns, function (col) {
-            return col.attrs.advanced && !(col.attrs.modifiers && col.attrs.modifiers.required);
+            return col.attrs.advanced;
         });
     },
     /**
@@ -202,8 +201,7 @@ var ListRenderer = BasicRenderer.extend({
     _computeAdvancedEnabled: function () {
         var self = this;
         _.each(this.allColumns, function (col) {
-            if (col.attrs.advanced && col.attrs.advanced === 'show'
-                || (col.attrs.modifiers && col.attrs.modifiers.required)) {
+            if (col.attrs.advanced && col.attrs.advanced === 'show') {
                 self.advancedColumnsEnabled.push(col.attrs.name);
             }
         });
@@ -217,9 +215,7 @@ var ListRenderer = BasicRenderer.extend({
     _computeColumns: function () {
         var self = this;
         return _.filter(this.allColumns, function (col) {
-            return !(col.attrs.advanced)
-                || _.contains(self.advancedColumnsEnabled, col.attrs.name)
-                || (col.attrs.modifiers && col.attrs.modifiers.required);
+            return !(col.attrs.advanced) || _.contains(self.advancedColumnsEnabled, col.attrs.name);
         });
     },
     /**
@@ -784,7 +780,7 @@ var ListRenderer = BasicRenderer.extend({
     _renderHeader: function () {
         var $tr = $('<tr>')
             .append(_.map(this.columns, this._renderHeaderCell.bind(this)));
-        if (this.addAdvancedDropdown && this.advancedColumns && this.advancedColumns.length) {
+        if (this.advancedColumns && this.advancedColumns.length) {
             $tr.append(this._renderAdvancedColumnsOption());
         }
         if (this.hasSelectors) {

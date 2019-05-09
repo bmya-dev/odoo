@@ -822,7 +822,7 @@ ListRenderer.include({
         }
 
         if (this.addTrashIcon) {
-            if (this.addAdvancedDropdown && this.advancedColumns.length) {
+            if (this.advancedColumns.length) {
                 $thead.find('tr th.o_advanced_column').addClass('o_list_record_remove_header');
             } else {
                 $thead.find('tr').append($('<th>', {class: 'o_list_record_remove_header'}));
@@ -1007,6 +1007,19 @@ ListRenderer.include({
     // Handlers
     //--------------------------------------------------------------------------
 
+    /**
+     * override this method to unselect row before advanced column added to listview
+     *
+     * @override
+     * @private
+     */
+    _onToggleAdvanceColumn: function (ev) {
+        var self = this;
+        var _super = this._super.bind(this);
+        this.unselectRow().then(function () {
+            _super.apply(self, [ev]);
+        });
+    },
     /**
      * This method is called when we click on the 'Add a line' button in a groupby
      * list view.
