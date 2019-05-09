@@ -2301,7 +2301,7 @@ class _RelationalMulti(_Relational):
             comodel = record.env[self.comodel_name]
             # if record is new, the field's value is new records
             if record and not record.id:
-                browse = lambda it: comodel.browse([NewId(it)])
+                browse = lambda it: comodel.browse([it and NewId(it)])
             else:
                 browse = comodel.browse
             # determine the value ids
