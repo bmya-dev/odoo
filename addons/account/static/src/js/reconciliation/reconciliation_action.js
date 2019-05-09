@@ -92,12 +92,15 @@ var StatementAction = AbstractAction.extend({
                 if (!self.model.context || !self.model.context.active_id) {
                     self.model.context = {'active_id': self.params.context.active_id};
                 }
+                if (self.params.context.journal_id) {
+                    self.model.context.active_id = self.params.context.journal_id;
+                }
                 return self._rpc({
                         model: 'account.journal',
                         method: 'read',
-                        args: [self.model.context.active_id, ['name']],
+                        args: [self.model.context.active_id, ['display_name']],
                     }).then(function (result) {
-                        var title = result[0] ? result[0]['name'] : ''
+                        var title = result[0] ? result[0]['display_name'] : ''
                         self._setTitle(title);
                         self.renderer = new self.config.ActionRenderer(self, self.model, {
                             'bank_statement_id': self.model.bank_statement_id,

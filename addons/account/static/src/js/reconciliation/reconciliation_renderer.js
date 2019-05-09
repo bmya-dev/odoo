@@ -91,12 +91,12 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
             if (line && e.originalEvent.code === 'ArrowUp') {
                 do {
                     line = line.previousSibling;
-                } while (line && $(line).find('.o_buttons button:visible:enabled').length === 0);
+                } while (line && $(line).find('.o_buttons button:visible').length === 0);
             }
             else if (line && e.originalEvent.code === 'ArrowDown') {
                 do {
                     line = line.nextSibling;
-                } while (line && $(line).find('.o_buttons button:visible:enabled').length === 0);
+                } while (line && $(line).find('.o_buttons button:visible').length === 0);
             }
         }
         if (!line) {

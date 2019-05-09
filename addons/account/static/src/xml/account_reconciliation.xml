@@ -182,52 +182,58 @@
             </div>
         </div>
     </div>
-    <table class="float-left">
-        <tr class="create_account_id">
-            <td class="o_td_label">Account</td>
-            <td class="o_td_field"></td>
-        </tr>
-        <tr class="create_tax_id">
-            <td class="o_td_label">Taxes</td>
-            <td class="o_td_field"></td>
-        </tr>
-        <tr class="create_analytic_account_id" groups="analytic.group_analytic_accounting">
-            <td class="o_td_label">Analytic Acc.</td>
-            <td class="o_td_field"></td>
-        </tr>
-        <tr class="create_analytic_tag_ids" groups="analytic.group_analytic_tags">
-            <td class="o_td_label">Analytic Tags.</td>
-            <td class="o_td_field"></td>
-        </tr>
-    </table>
-    <table class="float-right">
-        <tbody>
-            <tr class="create_journal_id" style="display: none;">
-                <td class="o_td_label">Journal</td>
+    <div class="clearfix o_form_sheet">
+    <div class="o_group">
+        <table class="o_group o_inner_group o_group_col_6">
+            <tbody>
+            <tr class="create_account_id">
+                <td class="o_td_label"><label class="o_form_label">Account</label></td>
                 <td class="o_td_field"></td>
             </tr>
-            <tr class="create_label">
-                <td class="o_td_label">Label</td>
+            <tr class="create_tax_id">
+                <td class="o_td_label"><label class="o_form_label">Taxes</label></td>
                 <td class="o_td_field"></td>
             </tr>
-            <tr class="create_amount">
-                <td class="o_td_label">Amount</td>
+            <tr class="create_analytic_account_id" groups="analytic.group_analytic_accounting">
+                <td class="o_td_label"><label class="o_form_label">Analytic Acc.</label></td>
                 <td class="o_td_field"></td>
             </tr>
-            <tr class="create_force_tax_included d-none">
-                <td class="o_td_label">Tax Included in Price</td>
-                <td class="o_td_field"></td>
-            </tr>
-            <tr class="create_date d-none">
-                <td class="o_td_label">Writeoff Date</td>
-                <td class="o_td_field"></td>
-            </tr>
-            <tr class="create_to_check"> <!--TODO d-none maybe see with avw-->
-                <td class="o_td_label">To Check</td>
+            <tr class="create_analytic_tag_ids" groups="analytic.group_analytic_tags">
+                <td class="o_td_label"><label class="o_form_label">Analytic Tags.</label></td>
                 <td class="o_td_field"></td>
             </tr>
         </tbody>
-    </table>
+        </table>
+        <table class="o_group o_inner_group o_group_col_6">
+            <tbody>
+                <tr class="create_journal_id" style="display: none;">
+                    <td class="o_td_label">Journal</td>
+                    <td class="o_td_field"></td>
+                </tr>
+                <tr class="create_label">
+                    <td class="o_td_label"><label class="o_form_label">Label</label></td>
+                    <td class="o_td_field"></td>
+                </tr>
+                <tr class="create_amount">
+                    <td class="o_td_label"><label class="o_form_label">Amount</label></td>
+                    <td class="o_td_field"></td>
+                </tr>
+                <tr class="create_force_tax_included d-none">
+                    <td class="o_td_label"><label class="o_form_label">Tax Included in Price</label></td>
+                    <td class="o_td_field"></td>
+                </tr>
+                <tr class="create_date d-none">
+                    <td class="o_td_label"><label class="o_form_label">Writeoff Date</label></td>
+                    <td class="o_td_field"></td>
+                </tr>
+                <tr class="create_to_check"> <!--TODO d-none maybe see with avw-->
+                    <td class="o_td_label"><label class="o_form_label">To Check</label></td>
+                    <td class="o_td_field"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    </div>
     <div class="add_line_container">
         <a class="add_line" t-att-style="!state.balance.amout ? 'display: none;' : null"><i class="fa fa-plus-circle"/> Save and New</a>
     </div>

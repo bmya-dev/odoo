@@ -864,7 +864,7 @@ class Field(MetaField('DummyField', (object,), {})):
 
     def convert_to_display_name(self, value, record):
         """ Convert ``value`` from the record format to a suitable display name. """
-        return ustr(value)
+        return ustr(value or " ")
 
     ############################################################################
     #

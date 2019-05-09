@@ -137,6 +137,7 @@
         }
         .cell_account_code {
             width: 80px;
+            padding-left: 5px;
         }
         .cell_due_date {
             width: 100px;
@@ -272,25 +273,15 @@
         }
         .quick_add {
             margin-bottom: 7px;
+            padding: 0 8px;
         }
-        table {
+        .o_group table.o_group_col_6 {
             width: 49%;
             margin: 0;
             vertical-align: top;
         }
-        td {
-            width: 99%;
-            padding-left: 8px;
-        }
-        tr .o_td_label {
-            vertical-align: top;
-            line-height: 26px;
-            font-weight: bold;
-            padding-right: 8px;
-            min-width: 100px;
-            border-right: 1px solid #ddd;
-            white-space: nowrap;
-            width: 1%;
+        .o_group table.o_group_col_6:first-child {
+            margin-left: 8px;
         }
         .btn {
             padding-top: 0;
