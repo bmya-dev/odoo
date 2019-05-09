@@ -144,6 +144,8 @@
         <script type="text/javascript" src="/web/static/src/js/services/notification_service.js"></script>
         <script type="text/javascript" src="/web/static/src/js/services/session_storage_service.js"></script>
 
+        <script type="text/javascript" src="/web/static/src/js/tools/debug_topbar.js"></script>
+
         <script type="text/javascript" src="/web/static/src/js/widgets/name_and_signature.js"></script>
         <script type="text/javascript" src="/web/static/src/js/widgets/notification.js"></script>
         <script type="text/javascript" src="/web/static/src/js/widgets/rainbow_man.js"></script>
@@ -386,7 +388,7 @@
             </head>
             <div t-if="debug_mode" class="o_debug_mode text-center text-white" t-att-debug_mode="debug_mode">
                 <t t-set="debug_mode_help" t-value="debug_mode in ['assets', 'tests'] and ' (%s)' % debug_mode"/>
-                Debug mode is activated<t t-esc="debug_mode_help"/>. <a href="?debug=" class="text-dark">Exit debug mode.</a>
+                Debug mode is activated<t t-esc="debug_mode_help"/>. <a href="#" class="text-dark">Exit debug mode.</a>
             </div>
             <body t-att-class="body_classname">
                 <t t-raw="0"/>
