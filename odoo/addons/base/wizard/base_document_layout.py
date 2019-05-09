@@ -8,12 +8,12 @@ from odoo.tools.image import image_data_uri
 
 _logger = logging.getLogger(__name__)
 
-class CompanyDocumentLayout(models.TransientModel):
+class BaseDocumentLayout(models.TransientModel):
     """
         Customise the company document layout and display a live preview
     """
 
-    _name = 'company.document.layout'
+    _name = 'base.document.layout'
     _description = 'Company Document Layout'
 
     company_id = fields.Many2one('res.company', default=lambda self: self.env.user.company_id)

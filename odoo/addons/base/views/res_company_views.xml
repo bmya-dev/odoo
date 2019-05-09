@@ -168,7 +168,7 @@
         </record>
         <record id="view_company_document_template_form" model="ir.ui.view">
             <field name="name">res.company.document.template.form</field>
-            <field name="model">company.document.layout</field>
+            <field name="model">base.document.layout</field>
             <field name="mode">primary</field>
             <field name="priority">2048</field>
             <field name="arch" type="xml">
