@@ -3132,14 +3132,21 @@ Fields:
         if not where_clause:
             return self
 
-        valid_ids = []
+        # detemine ids in database that satisfy ir.rules
+        valid_ids = set()
         query = "SELECT {}.id FROM {} WHERE {}.id IN %s AND {}".format(
             self._table, ",".join(tables), self._table, " AND ".join(where_clause),
         )
-        for sub_ids in self._cr.split_for_in_conditions(self.ids):
+        for sub_ids in self._cr.split_for_in_conditions(self._origin._ids):
             self._cr.execute(query, [sub_ids] + where_params)
-            valid_ids.extend(row[0] for row in self._cr.fetchall())
-        return self.browse(valid_ids)
+            valid_ids.update(row[0] for row in self._cr.fetchall())
+
+        # return new ids without origin and ids with origin in valid_ids
+        return self.browse([
+            it
+            for it in self._ids
+            if not (it or it.origin) or (it or it.origin) in valid_ids
+        ])
 
     @api.multi
     def unlink(self):

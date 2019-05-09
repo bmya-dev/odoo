@@ -1143,6 +1143,16 @@ class TestFields(common.TransactionCase):
         self.assertNotEqual(message.sudo().env, message.env)
         self.assertEqual(message.discussion_name, discussion.name)
 
+    def test_43_new_related(self):
+        """ test the behavior of one2many related fields """
+        partner = self.env['res.partner'].create({
+            'name': 'Foo',
+            'child_ids': [(0, 0, {'name': 'Bar'})],
+        })
+        multi = self.env['test_new_api.multi'].new()
+        multi.partner = partner
+        self.assertEqual(multi.partners.mapped('name'), ['Bar'])
+
     def test_50_defaults(self):
         """ test default values. """
         fields = ['discussion', 'body', 'author', 'size']

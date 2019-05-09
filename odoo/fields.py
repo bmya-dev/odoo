@@ -2398,9 +2398,9 @@ class _RelationalMulti(_Relational):
         super(_RelationalMulti, self)._compute_related(records)
         if self.related_sudo:
             # determine which records in the relation are actually accessible
-            target = records[self.name]
-            target_ids = set(target.search([('id', 'in', target.ids)]).ids)
-            accessible = lambda target: target.id in target_ids
+            lines = records[self.name]
+            accessible_ids = set(lines._filter_access_rules('read')._ids)
+            accessible = lambda line: line.id in accessible_ids
             # filter values to keep the accessible records only
             for record in records:
                 record[self.name] = record[self.name].filtered(accessible)
