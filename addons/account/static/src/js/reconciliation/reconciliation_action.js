@@ -114,9 +114,8 @@ var StatementAction = AbstractAction.extend({
     reload: function() {
         // On reload destroy all rendered line widget, reload data and then rerender widget
         var self = this;
-        $('[autocomplete]').removeAttr('autocomplete')
 
-        self.$('.o_reconciliation_lines *').off('remove');
+        self.$('.o_reconciliation_line').addClass('d-none'); // prevent the browser from recomputing css after each destroy for HUGE perf improvement on a lot of lines
         _.each(this.widgets, function(widget) {
             widget.destroy();
         });
