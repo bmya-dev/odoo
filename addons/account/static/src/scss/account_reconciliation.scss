@@ -90,11 +90,6 @@
 
     .o_reconciliation_line {
         margin-bottom: 30px;
-        opacity: 0.6;
-
-        &:hover, &:not([data-mode="inactive"]) {
-            opacity: 1;
-        }
         table {
             width: 100%;
             vertical-align: top;
@@ -216,6 +211,10 @@
         > .o_notebook > .tab-content > div {
             border: 1px solid #ddd;
             border-top: 0;
+        }
+
+        > .o_notebook .match table tr:hover {
+            background-color: #eee;
         }
 
         &:not([data-mode="inactive"]) > .o_notebook {
