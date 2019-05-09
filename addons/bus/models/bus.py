@@ -193,6 +193,12 @@ class ImDispatch(object):
         self.started = True
         return self
 
+    def im_status(self, dbname, partner_ids):
+        registry = odoo.registry(dbname)
+        with registry.cursor() as cr:
+            env = api.Environment(cr, SUPERUSER_ID, {})
+            return env['res.partner'].search_read([['id', 'in', partner_ids]], ['id', 'im_status'])
+
 dispatch = None
 if not odoo.multi_process or odoo.evented:
     # We only use the event dispatcher in threaded and gevent mode

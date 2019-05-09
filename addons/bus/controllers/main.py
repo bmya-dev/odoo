@@ -38,3 +38,7 @@ class BusController(Controller):
         if request.registry.in_test_mode():
             raise exceptions.UserError(_("bus.Bus not available in test mode"))
         return self._poll(request.db, channels, last, options)
+
+    @route('/longpolling/im_status', type="json")
+    def im_status(self, partner_ids):
+        return dispatch.im_status(request.db, partner_ids)
