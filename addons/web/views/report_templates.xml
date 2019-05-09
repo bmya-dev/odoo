@@ -414,7 +414,7 @@
         </t>
     </template>
 
-    <!-- this template is used by the company_document_layout wizard to display a live preview of a dummy report -->
+    <!-- this template is used by the BaseDocumentLayout wizard to display a live preview of a dummy report -->
     <template id="layout_preview" name="layout preview">
         <!-- compute some layout specific variables -->
         <t t-set="footer_color" t-value="'black'" />

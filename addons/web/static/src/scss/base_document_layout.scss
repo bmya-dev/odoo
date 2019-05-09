@@ -1,18 +1,19 @@
+.o_document_layout {
+    padding-bottom: 0px !important;
+}
 
-.o_preview_container {
+.o_document_layout_preview {
     border: 1px solid;
     border-color: lightgray;
     padding: 15px;
-    width: 450px;
-    height: 500px;
 }
 
-.o_preview_logo img {
+.o_document_layout_preview_logo img {
     padding-left: 5px;
     max-height: 45px;
 }
 
-.o_preview_reset_link {
+.o_document_layout_reset_link {
     label {
         @extend .btn-link;
         font-weight: bold !important;
@@ -20,16 +21,17 @@
     }
 }
 
-.o_preview_color {
+.o_document_layout_company_color {
     .o_field_widget {
         display: inline;
     }
 }
 
-.o_preview_company {
-    // need a little more space for the preview
-    img {
-        max-width: 270px !important;
+.o_document_layout_company {
+    // we need enough space left for the preview
+    max-width: 50%;
+    tr td {
+        width: auto !important;
     }
     border-collapse: separate;
     border-spacing: 0 1rem;
@@ -37,9 +39,12 @@
     select option:first-child {
         display: none;
     }
+    img {
+        max-height: 90px;
+    }
 }
 
-.o_preview_content {
+.o_document_layout_preview_html {
     .header {
         * {
             padding: 5px;

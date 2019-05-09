@@ -16,7 +16,7 @@ class BaseDocumentLayout(models.TransientModel):
     _name = 'base.document.layout'
     _description = 'Company Document Layout'
 
-    company_id = fields.Many2one('res.company', default=lambda self: self.env.user.company_id)
+    company_id = fields.Many2one('res.company')
 
     logo = fields.Binary(related='company_id.logo', readonly=False)
     preview_logo = fields.Binary(related='logo', readonly=False)
@@ -33,7 +33,7 @@ class BaseDocumentLayout(models.TransientModel):
     report_layout_id = fields.Many2one('report.layout', compute="_compute_report_layout_id", readonly=False)
     use_default_colors = fields.Boolean(compute="_compute_use_default_colors")
     preview = fields.Html(compute='_compute_preview')
-    reset_link = fields.Boolean(string="Reset to default")
+    reset_link = fields.Boolean()
 
     @api.depends('company_id')
     def _compute_report_layout_id(self):
