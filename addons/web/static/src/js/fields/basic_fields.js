@@ -3012,7 +3012,6 @@ var AceEditor = DebouncedField.extend({
  */
 var FieldColor = AbstractField.extend({
     template: 'FieldColor',
-    //xmlDependencies: ['/web_editor/static/src/xml/editor.xml'],
     supportedFieldTypes: ['char'],
     events: {
         'click .o_field_color': '_onColorClick',
@@ -3020,6 +3019,20 @@ var FieldColor = AbstractField.extend({
     custom_events: {
         'colorpicker:saved': '_onColorSaved',
     },
+
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    /**
+    * @private
+    * @override
+    */
+    init: function (parent, options) {
+        this._super.apply(this, arguments);
+        this.defaultColor='#000000'
+    },
+
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
@@ -3029,7 +3042,7 @@ var FieldColor = AbstractField.extend({
     * @override
     */
     _render: function () {
-        this.$('.o_field_color').css('background-color', this.value);
+        this.$('.o_field_color').css('background-color', this.value || this.defaultColor);
     },
 
     //--------------------------------------------------------------------------
@@ -3042,7 +3055,7 @@ var FieldColor = AbstractField.extend({
     */
     _onColorClick: function (ev) {
         ev.stopPropagation();
-        this.colorpicker = new ColorpickerDialog(this, {defaultColor: this.value}).open();
+        this.colorpicker = new ColorpickerDialog(this, {defaultColor: this.value || this.defaultColor}).open();
     },
     /**
     * @private

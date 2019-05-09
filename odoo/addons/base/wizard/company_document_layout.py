@@ -13,14 +13,10 @@ class CompanyDocumentLayout(models.TransientModel):
         Customise the company document layout and display a live preview
     """
 
-    @api.model
-    def _get_current_company(self):
-        return self.env['res.users'].browse(self._uid).company_id
-
     _name = 'company.document.layout'
     _description = 'Company Document Layout'
 
-    company_id = fields.Many2one('res.company', default=_get_current_company)
+    company_id = fields.Many2one('res.company', default=lambda self: self.env.user.company_id)
 
     logo = fields.Binary(related='company_id.logo', readonly=False)
     preview_logo = fields.Binary(related='logo', readonly=False)
@@ -29,22 +25,15 @@ class CompanyDocumentLayout(models.TransientModel):
     paperformat_id = fields.Many2one(related='company_id.paperformat_id', readonly=False)
     external_report_layout_id = fields.Many2one(
         related='company_id.external_report_layout_id', readonly=False)
-    report_layout_id = fields.Many2one('report.layout', compute="_compute_report_layout_id", readonly=False)
+
     font = fields.Selection(related='company_id.font', readonly=False)
     primary_color = fields.Char(related='company_id.primary_color', readonly=False)
     secondary_color = fields.Char(related='company_id.secondary_color', readonly=False)
 
-    @api.multi
-    def _get_use_default_colors(self):
-        #TODO test
-        for wizard in self:
-            # prefer user selected colors if they are set
-            return not(wizard.primary_color and wizard.secondary_color)
-
+    report_layout_id = fields.Many2one('report.layout', compute="_compute_report_layout_id", readonly=False)
+    use_default_colors = fields.Boolean(compute="_compute_use_default_colors")
     preview = fields.Html(compute='_compute_preview')
     reset_link = fields.Boolean(string="Reset to default")
-    #FIXME does not work when the wizard is used for the first time
-    use_default_colors = fields.Boolean(default=_get_use_default_colors)
 
     @api.depends('company_id')
     def _compute_report_layout_id(self):
@@ -52,6 +41,11 @@ class CompanyDocumentLayout(models.TransientModel):
             wizard.report_layout_id = wizard.env["report.layout"].search([
                 ('view_id.key', '=', wizard.company_id.external_report_layout_id.key)
             ])
+
+    @api.depends('company_id')
+    def _compute_use_default_colors(self):
+        for wizard in self:
+            wizard.use_default_colors = not(wizard.primary_color and wizard.secondary_color)
 
     @api.onchange('reset_link')
     def reset_colors(self):

@@ -58,8 +58,8 @@ class Company(models.Model):
     paperformat_id = fields.Many2one('report.paperformat', 'Paper format', default=lambda self: self.env.ref('base.paperformat_euro', raise_if_not_found=False))
     external_report_layout_id = fields.Many2one('ir.ui.view', 'Document Template')
     font = fields.Selection([("Lato", "Lato"), ("Roboto", "Roboto"), ("OpenSans", "OpenSans"), ("Montserrat", "Montserrat"), ("Oswald", "Oswald"), ("Raleway", "Raleway")], default="Lato")
-    primary_color = fields.Char(default="#000000")
-    secondary_color = fields.Char(default="#000000")
+    primary_color = fields.Char()
+    secondary_color = fields.Char()
     scss_attachment = fields.Many2one('ir.attachment') # an attachment containing the company's scss variables
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'The company name must be unique !')
