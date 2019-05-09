@@ -49,7 +49,7 @@ class MrpAbstractWorkorder(models.AbstractModel):
         used in onchange and request that write on db (e.g. workorder creation).
         """
         line_values = {'to_create': [], 'to_delete': [], 'to_update': {}}
-        for move_raw in self.move_raw_ids.filtered(lambda move: move.state not in ('done', 'cancel')):
+        for move_raw in self.move_raw_ids._origin.filtered(lambda move: move.state not in ('done', 'cancel')):
             move_workorder_lines = self.workorder_line_ids.filtered(lambda w: w.move_id == move_raw)
 
             # Compute the new quantity for the current component
