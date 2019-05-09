@@ -480,6 +480,7 @@ class StockMoveLine(models.Model):
                 # Check if SN has been scrapped
                 scrapped = any([quant.location_id.scrap_location for quant in similar_quant])
                 if scrapped and not line_to_check.filtered(lambda line: line.lot_id == lot).location_dest_id.scrap_location:
+                    error_message = _('Serial number %s for product %s was scrapped previously') % (lot.name, lot.product_id.display_name)
                     raise UserError(error_message)
                 if similar_quant:
                     # the following step will group the quants by location usage
@@ -510,7 +511,7 @@ class StockMoveLine(models.Model):
                     quantity = sum([x[1] >= 1 for x in sq])
                     if duplicates or quantity > 1:
                         if not error_message:
-                            error_message = _('Some serial numbers are duplicated accross different locations:')
+                            error_message = _('Some serial numbers are duplicated across different locations:')
                         error_message += _('\n%s for product %s.') % (lot.name, lot.product_id.display_name)
         if error_message:
             error_message += _('\nCorrect your inventory with an inventory adjustment before validating this product move')
