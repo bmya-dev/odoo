@@ -107,6 +107,12 @@ class AssetsBundle(object):
             elif f['atype'] == 'text/css':
                 self.stylesheets.append(StylesheetAsset(self, url=f['url'], filename=f['filename'], inline=f['content'], media=f['media'], direction=self.user_direction))
             elif f['atype'] == 'text/javascript':
+                url = f['url']
+                if url and '/web_tour/' not in url:
+                    dirname, filename = os.path.split(url)
+                    is_tour_file = any([s for s in ['test', 'tour'] if s in filename])
+                    if is_tour_file and not dirname.endswith('/tours'):
+                        _logger.warning("%s should be inside a /tours folder." % url)
                 self.javascripts.append(JavascriptAsset(self, url=f['url'], filename=f['filename'], inline=f['content']))
 
     def to_node(self, css=True, js=True, debug=False, async_load=False):
