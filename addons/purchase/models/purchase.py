@@ -479,6 +479,8 @@ class PurchaseOrderLine(models.Model):
                 'price_tax': sum(t.get('amount', 0.0) for t in taxes.get('taxes', [])),
                 'price_total': taxes['total_included'],
                 'price_subtotal': taxes['total_excluded'],
+                'account_analytic_id': vals.get('account_analytic_id'),
+                'analytic_tag_ids': vals.get('analytic_tag_ids'),
             })
 
     def _prepare_compute_all_values(self):
