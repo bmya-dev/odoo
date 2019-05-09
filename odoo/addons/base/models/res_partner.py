@@ -414,11 +414,6 @@ class Partner(models.Model):
         if not self.image and self._context.get('gravatar_image') and self.email:
             self.image = self._get_gravatar_image(self.email)
 
-    @api.onchange('parent_id', 'company_id')
-    def _onchange_company_id(self):
-        if self.parent_id:
-            self.company_id = self.parent_id.company_id.id
-
     @api.depends('name', 'email')
     def _compute_email_formatted(self):
         for partner in self:
@@ -532,6 +527,8 @@ class Partner(models.Model):
         if any(field in values for field in address_fields):
             contacts = self.child_ids.filtered(lambda c: c.type == 'contact')
             contacts.update_address(values)
+        # 2c. update child's company based on parent's company
+        self.child_ids.write({'company_id': self.company_id.id})
 
     @api.multi
     def _handle_first_contact_creation(self):
