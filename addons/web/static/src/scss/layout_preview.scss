@@ -3,7 +3,8 @@
     border: 1px solid;
     border-color: lightgray;
     padding: 15px;
-    max-width: 450px;
+    width: 450px;
+    height: 500px;
 }
 
 .o_preview_logo img {
@@ -22,6 +23,19 @@
 .o_preview_color {
     .o_field_widget {
         display: inline;
+    }
+}
+
+.o_preview_company {
+    // need a little more space for the preview
+    img {
+        max-width: 270px !important;
+    }
+    border-collapse: separate;
+    border-spacing: 0 1rem;
+    // hide the default empty option
+    select option:first-child {
+        display: none;
     }
 }
 
