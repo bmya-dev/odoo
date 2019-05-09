@@ -2889,7 +2889,7 @@ QUnit.module('relational_fields', {
     });
 
     QUnit.test('one2many field in edit mode with advanced fields and trash icon', async function (assert) {
-        assert.expect(10);
+        assert.expect(8);
 
         this.data.partner.records[0].p = [2];
         var form = await createView({
@@ -2917,9 +2917,12 @@ QUnit.module('relational_fields', {
             "should be 2 th in the one2many edit mode");
         assert.containsN(form.$('.o_field_one2many'), '.o_data_row:first > td', 2,
             "should be 2 cells in the one2many in edit mode");
-        assert.hasClass(form.$('.o_field_one2many thead th:last'), 'o_advanced_column',
+
+        // should not have advanced column in edit mode
+        assert.doesNotHaveClass(form.$('.o_field_one2many thead th:last'), 'o_advanced_column',
             "should have add column option at last");
 
+        await testUtils.form.clickSave(form);
         testUtils.dom.click(form.$('.o_field_one2many th.o_advanced_column > a.dropdown-toggle'));
         assert.containsN(form.$('.o_field_one2many'), 'div.o_advanced_column_dropdown > div.dropdown-item', 2,
             "dropdown have 2 advanced field foo with checked and bar with unchecked");
@@ -2932,20 +2935,41 @@ QUnit.module('relational_fields', {
         assert.containsN(form.$('.o_field_one2many'), 'th', 2,
             "should be 2 th in the one2many after disabling foo column from advanced dropdown");
 
-        await testUtils.dom.click(form.$('.o_field_x2many_list_row_add a'));
-        var $selectedRow = form.$('.o_field_one2many tr.o_selected_row');
-        assert.strictEqual($selectedRow.length, 1, "should have selected row i.e. edition mode");
-
-        testUtils.dom.click(form.$('.o_field_one2many th.o_advanced_column > a.dropdown-toggle'));
-        await testUtils.dom.click(form.$('div.o_advanced_column_dropdown > div.dropdown-item:first input'));
-        $selectedRow = form.$('.o_field_one2many tr.o_selected_row');
-        assert.strictEqual($selectedRow.length, 0,
-            "current edition mode discarded when selecting advanced field");
-
         // check after form reload advanced column hidden or shown are still preserved
         await form.reload();
         assert.containsN(form.$('.o_field_one2many .o_list_view'), 'th', 2,
             "should still have 2 th in the one2many after reloading whole form view");
+
+        form.destroy();
+    });
+
+    QUnit.test('one2many field in edit mode with advanced fields and trash icon', async function (assert) {
+        assert.expect(2);
+
+        this.data.partner.records[0].p = [2];
+        this.data.partner.fields.bar.required = true;
+        var form = await createView({
+            View: FormView,
+            model: 'partner',
+            data: this.data,
+            arch: '<form string="Partners">' +
+                    '<field name="p"/>' +
+                '</form>',
+            res_id: 1,
+            archs: {
+                'partner,false,list': '<tree editable="top">' +
+                    '<field name="foo" advanced="show"/>' +
+                    '<field name="bar" advanced="hide"/>' +
+                '</tree>',
+            },
+        });
+
+        // should have 3 th as bar is required field so it's never gonna hidden
+        assert.containsN(form.$('.o_field_one2many'), 'th', 3,
+            "should have 3 th in the one2many in readonly mode");
+        testUtils.dom.click(form.$('.o_field_one2many th.o_advanced_column > a.dropdown-toggle'));
+        assert.containsN(form.$('.o_field_one2many'), 'div.o_advanced_column_dropdown > div.dropdown-item', 1,
+            "dropdown have 1 advanced field foo with checked and bar should not be there because it is required");
 
         form.destroy();
     });
