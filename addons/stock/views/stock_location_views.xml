@@ -59,6 +59,33 @@
         </field>
     </record>
 
+    <record id="view_location_qweb" model="ir.ui.view">
+        <field name="name">stock.location.qweb</field>
+        <field name="type">qweb</field>
+        <field name="model">stock.location</field>
+        <field name="arch" type="xml">
+            <div class="stock_location_hierarchy">
+                <t t-call="stock.build_tree"/>
+            </div>
+        </field>
+    </record>
+
+    <template id="build_tree" name="Stock Location Tree">
+        <ul>
+            <t t-foreach="data" t-as="datum">
+                <li>
+                    <div class="box">
+                        <t t-esc="datum['name']"/>
+                    </div>
+                    <t t-if="len(datum['children'])">
+                        <t t-set="data" t-value="datum['children']"/>
+                        <t t-call="stock.build_tree"/>
+                    </t>
+                </li>
+            </t>
+        </ul>
+    </template>
+
     <record id="stock_location_view_form_editable" model="ir.ui.view">
         <field name="name">stock.location.form.editable</field>
         <field name="model">stock.location</field>
@@ -118,6 +145,7 @@
         <field name="res_model">stock.location</field>
         <field name="type">ir.actions.act_window</field>
         <field name="view_type">form</field>
+        <field name="view_mode">tree,form,qweb</field>
         <field name="view_id" ref="view_location_tree2"/>
         <field name="search_view_id" ref="view_location_search"/>
         <field name="context">{'search_default_in_location':1}</field>
