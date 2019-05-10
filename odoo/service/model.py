@@ -122,25 +122,29 @@ def check(f):
                     msg = _('The operation cannot be completed.\n\n')
                     _logger.debug("IntegrityError", exc_info=True)
                     try:
-                        errortxt = inst.pgerror.replace('«','"').replace('»','"')
-                        value = re.findall(r'\"(.+?)\"', errortxt)
-                        rmodel_name = value[1] if '"public".' in errortxt else value[0]
-                        model_name = table = value[-1]
-                        rmodel = rmodel_name.replace("_", ".")
-                        model = table.replace("_", ".")
-                        if (model or rmodel) in registry:
-                            model_class, rmodel_class = registry[model], registry[rmodel]
-                            model_name, rmodel_name = model_class._description or model_class._name, rmodel_class._description or rmodel_class._name
-                        if inst.pgcode == errorcodes.NOT_NULL_VIOLATION:
+                        errortxt = inst.pgerror
+                        if '"public".' in errortxt:
+                            context = errortxt.split('"public".')[1]
+                            rmodel_name = context.split('"')[1]
+                        else:
+                            rmodel_name = re.search(r'\"(.+?)\"|\«(.+?)\»', errortxt).group(1)
+                            last_quote_end = errortxt.rfind('"')
+                            last_quote_begin = errortxt.rfind('"', 0, last_quote_end)
+                            model_name = errortxt[last_quote_begin+1:last_quote_end].strip()
+                        if not model_name or rmodel_name == model_name:
                             model = kwargs.get('model')
-                            model_class = registry[model]
+                            model_class = registry[model] if model in registry else False
+                        else:
+                            model = model_name.replace("_",".")
+                            model_class = registry[model] if model in registry else False
+                        rmodel = rmodel_name.replace("_", ".")
+                        rmodel_class = registry[rmodel] if rmodel in registry else False
+                        if inst.pgcode == errorcodes.NOT_NULL_VIOLATION:
                             msg += _('A record of model %s (%s) cannot be created/updated because some of its required fields are not set: \n %s (%s)') % (model_class._description, model_class._name, model_class._fields.get(rmodel_name).string, rmodel_name)
                         if inst.pgcode == errorcodes.FOREIGN_KEY_VIOLATION:
-                            msg += _('A record of %s (%s) cannot be found and therefore referenced.\n If you are trying to save a record, this record is probably referencing another from model %s (%s) that does not exist anymore.') % (rmodel_name, rmodel_class._name, model_name, model_class._name)
+                            msg += _('A record of %s (%s) cannot be found and therefore referenced.\n If you are trying to save a record, this record is probably referencing another from model %s (%s) that does not exist anymore.') % (rmodel_class._description, rmodel_class._name, model_class._description, model_class._name)
                         if inst.pgcode == errorcodes.RESTRICT_VIOLATION:
-                            model = kwargs.get('model')
-                            model_class = registry[model]
-                            msg += _('You may be trying to delete a record that is referenced by others from model "%s" (%s).\nIf possible, you should archive the record instead of deleting it.\n If you have to delete the record, make sure to unlink it from the records referencing it first.') % (model_class._description, model_class._name)
+                            msg += _('You may be trying to delete a record that is referenced by others from model "%s" (%s).\nIf possible, you should archive the record instead of deleting it.\n If you have to delete the record, make sure to unlink it from the records referencing it first.') % (rmodel_class._description, rmodel_class._name)
                     except Exception:
                         pass
                     raise ValidationError(msg)
