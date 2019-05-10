@@ -56,8 +56,13 @@ class WebsiteProfile(http.Controller):
         return user_sudo
 
     def _prepare_user_values(self, **kwargs):
+        user_id = int(kwargs['searches'].get('user_id')) if 'searches' in kwargs else None
+        if request.env.user._is_admin() and user_id and not user_id == request.env.user.id:
+            user = request.env['res.users'].browse(user_id)
+        else:
+            user = request.env.user
         values = {
-            'user': request.env.user,
+            'user': user,
             'is_public_user': request.website.is_public_user(),
             'validation_email_sent': request.session.get('validation_email_sent', False),
             'validation_email_done': request.session.get('validation_email_done', False),
@@ -155,7 +160,11 @@ class WebsiteProfile(http.Controller):
 
     @http.route('/profile/user/save', type='http', auth="user", methods=['POST'], website=True)
     def save_edited_profile(self, **kwargs):
-        user = request.env.user
+        user_id = int(kwargs.get('user_id'))
+        if request.env.user._is_admin() and user_id and not user_id == request.env.user.id:
+            user = request.env['res.users'].browse(user_id)
+        else:
+            user = request.env.user
         values = self._profile_edition_preprocess_values(user, **kwargs)
         whitelisted_values = {key: values[key] for key in type(user).SELF_WRITEABLE_FIELDS if key in values}
         user.write(whitelisted_values)
