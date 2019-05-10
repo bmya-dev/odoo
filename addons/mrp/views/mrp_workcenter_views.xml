@@ -329,6 +329,12 @@
                         <group>
                             <group>
                                 <field name="name" string="Work Center Name" required="True"/>
+                                <field
+                                    name="alternative_workcenter_ids"
+                                    widget="many2many_tags"
+                                    domain="[('id','!=', id)]"
+                                    options="{'no_create': True, 'no_edit': True}"
+                                />
                             </group>
                             <group>
                                 <field name="code"/>
@@ -339,7 +345,7 @@
                         <notebook>
                             <page string="General Information">
                                 <group>
-                                    <group name="capacity">
+                                    <group string="Production Information" name="capacity">
                                         <label for="time_efficiency"/>
                                         <div class="o_row">
                                             <field name="time_efficiency"/> %
