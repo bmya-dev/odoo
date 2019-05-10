@@ -26,6 +26,8 @@ var ProductComparison = Widget.extend({
     init: function(){
         this.comparelist_product_ids = JSON.parse(utils.get_cookie('comparelist_product_ids') || '[]');
         this.product_compare_limit = 4;
+        this.guard = null;
+        this.pendingSavingRequests = 0;
     },
     start:function(){
         var self = this;
@@ -120,8 +122,16 @@ var ProductComparison = Widget.extend({
             if(_.has(self.product_data, product_id)){
                 self.update_content([product_id], false);
             } else {
+                self.guard = self.guard || $.Deferred();
+                self.pendingSavingRequests++;
                 self.load_products([product_id]).then(function(){
                     self.update_content([product_id], false);
+                    self.pendingSavingRequests--;
+                    if (self.pendingSavingRequests === 0) {
+                        self.guard.resolve();
+                        self.guard = null;
+                    }
+
                 });
             }
         }
@@ -139,6 +149,9 @@ var ProductComparison = Widget.extend({
         this.refresh_panel();
     },
     rm_from_comparelist: function(e){
+        $.when(this.guard).then(this._rm_from_comparelist.bind(this, e));
+    },
+    _rm_from_comparelist: function(e){
         this.comparelist_product_ids = _.without(this.comparelist_product_ids, $(e.currentTarget).data('product_product_id'));
         $(e.currentTarget).parents('.o_product_row').remove();
         this.update_cookie();
