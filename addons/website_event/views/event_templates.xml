@@ -197,17 +197,6 @@
 <template id="event_edit_options" inherit_id="website.user_navbar" name="Edit Event Options">
     <xpath expr="//li[@id='edit-page-menu']" position="after">
         <t t-if="main_object._name == 'event.event'" t-set="action" t-value="'event.action_event_view'" />
-        <t t-elif="event">
-            <li>
-                <a role="button" class="btn btn-primary btn-sm dropdown-toggle css_edit_dynamic" data-toggle="dropdown">
-                    <span class="sr-only">Toggle Dropdown</span>
-                </a>
-                <div class="dropdown-menu" role="menu">
-                    <a role="menuitem" style="text-align: left;" t-attf-href="/web#return_label=Website&amp;view_type=form&amp;model=#{event._name}&amp;id=#{event.id}&amp;action=#{'event.action_event_view'}&amp;menu_id=#{menu or event.env.ref('website.menu_website_configuration').id}"
-                           class="dropdown-item" title='Edit in backend' id="edit-in-backend">Edit in backend</a>
-                </div>
-            </li>
-        </t>
     </xpath>
 </template>
 <template id="layout">
