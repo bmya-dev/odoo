@@ -148,7 +148,7 @@
                                 <div>
                                     <field name="duration" class="oe_inline" widget="float_time"/> hours
                                 </div>
-                                <field name="location_id"/>
+                                <field name="location_id" options="{'no_create': True}"/>
                                 <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
                             </group>
                         </group>
