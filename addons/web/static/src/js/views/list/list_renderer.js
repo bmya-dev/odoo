@@ -72,11 +72,11 @@ var ListRenderer = BasicRenderer.extend({
         // we want to trigger_up event to get advance columns enabled from localstorage
         // in init parent will be action manager for renderer,
         // controller as a parent is set later once instance of renderer is created
-        var advancedColumnsEnabled = [];
+        var advancedColumnsEnabled;
         this.trigger_up('get_advanced_columns', {
             callback: function (columns) { advancedColumnsEnabled = columns;}
         });
-        this.advancedColumnsEnabled = advancedColumnsEnabled || [];
+        this.advancedColumnsEnabled = advancedColumnsEnabled;
         this._processColumns(this.columnInvisibleFields || {});
         return this._super.apply(this, arguments);
     },
@@ -200,6 +200,7 @@ var ListRenderer = BasicRenderer.extend({
      */
     _computeAdvancedEnabled: function () {
         var self = this;
+        this.advancedColumnsEnabled = [];
         _.each(this.allColumns, function (col) {
             if (col.attrs.advanced && col.attrs.advanced === 'show') {
                 self.advancedColumnsEnabled.push(col.attrs.name);
@@ -307,7 +308,7 @@ var ListRenderer = BasicRenderer.extend({
         });
         // if advance column enabled are not found from localstorage then
         // compute it based view architcture attribute advanced=hide/show
-        if (!this.advancedColumnsEnabled.length) {
+        if (this.advancedColumnsEnabled === undefined) {
             this._computeAdvancedEnabled();
         }
         this.columns = this._computeColumns();
