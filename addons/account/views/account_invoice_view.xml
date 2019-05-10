@@ -330,8 +330,7 @@
                                     <field name="name"/>
                                     <field name="company_id" invisible="1"/>
                                     <field name="account_id" options="{'no_create': True}" groups="account.group_account_user"
-                                        domain="[('company_id', '=', parent.company_id), ('internal_type', '=', 'other'), ('deprecated', '=', False)]"
-                                        advanced="show"/>
+                                        domain="[('company_id', '=', parent.company_id), ('internal_type', '=', 'other'), ('deprecated', '=', False)]"/>
                                     <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
                                         domain="[('company_id', '=', parent.company_id)]"
                                         context="{'default_partner_id': parent.partner_id}"
@@ -507,7 +506,6 @@
                                         groups="account.group_account_user"
                                         domain="[('company_id', '=', parent.company_id), ('internal_type', '=', 'other'), ('deprecated', '=', False)]"
                                         attrs="{'required': [('display_type', '=', False)]}"
-                                        advanced="show"
                                     />
                                     <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
                                         domain="[('company_id', '=', parent.company_id)]"
