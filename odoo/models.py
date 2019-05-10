@@ -52,7 +52,8 @@ from . import tools
 from .exceptions import AccessError, MissingError, ValidationError, UserError
 from .osv.query import Query
 from .tools import frozendict, lazy_classproperty, lazy_property, ormcache, \
-                   Collector, LastOrderedSet, OrderedSet, groupby
+                   Collector, LastOrderedSet, OrderedSet, IterableGenerator, \
+                   groupby
 from .tools.config import config
 from .tools.func import frame_codeinfo
 from .tools.misc import CountingStream, clean_context, DEFAULT_SERVER_DATETIME_FORMAT, DEFAULT_SERVER_DATE_FORMAT
@@ -202,10 +203,10 @@ class NewId(object):
 
 
 def origin_ids(ids):
-    """ Return the origin ids corresponding to ``ids``. Actual ids are returned
-        as is, and ids without origin are not returned.
+    """ Return an iterator over the origin ids corresponding to ``ids``.
+        Actual ids are returned as is, and ids without origin are not returned.
     """
-    return tuple((id_ or id_.origin) for id_ in ids if (id_ or id_.origin))
+    return ((id_ or id_.origin) for id_ in ids if (id_ or id_.origin))
 
 
 IdType = (int, str, NewId)
@@ -5018,8 +5019,8 @@ Fields:
     @property
     def _origin(self):
         """ Return the actual records corresponding to ``self``. """
-        ids = origin_ids(self._ids)
-        prefetch_ids = tools.lazy(origin_ids, self._prefetch_ids)
+        ids = tuple(origin_ids(self._ids))
+        prefetch_ids = IterableGenerator(origin_ids, self._prefetch_ids)
         return self._browse(self.env, ids, prefetch_ids)
 
     #

@@ -23,8 +23,8 @@ except ImportError:
 import psycopg2
 
 from .sql_db import LazyCursor
-from .tools import float_repr, float_round, frozendict, html_sanitize, human_size, pg_varchar,\
-    ustr, OrderedSet, pycompat, sql, date_utils, unique
+from .tools import float_repr, float_round, frozendict, html_sanitize, human_size, pg_varchar, \
+    ustr, OrderedSet, pycompat, sql, date_utils, unique, IterableGenerator
 from .tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
 from .tools import DEFAULT_SERVER_DATETIME_FORMAT as DATETIME_FORMAT
 from .tools.translate import html_translate, _
@@ -2202,7 +2202,7 @@ class Many2one(_Relational):
 
     def convert_to_record(self, value, record):
         # use registry to avoid creating a recordset for the model
-        prefetch_ids = PrefetchValueIds(record, self)
+        prefetch_ids = IterableGenerator(prefetch_value_ids, record, self)
         return record.pool[self.comodel_name]._browse(record.env, value, prefetch_ids)
 
     def convert_to_read(self, value, record, use_name_get=True):
@@ -2340,7 +2340,7 @@ class _RelationalMulti(_Relational):
 
     def convert_to_record(self, value, record):
         # use registry to avoid creating a recordset for the model
-        prefetch_ids = PrefetchValueIds(record, self)
+        prefetch_ids = IterableGenerator(prefetch_value_ids, record, self)
         return record.pool[self.comodel_name]._browse(record.env, value, prefetch_ids)
 
     def convert_to_read(self, value, record, use_name_get=True):
@@ -2902,24 +2902,13 @@ class Id(Field):
         raise TypeError("field 'id' cannot be assigned")
 
 
-class PrefetchValueIds(object):
-    """ An iterable on the ids of the cached values of a relational field for
-        the prefetch set of a record.
+def prefetch_value_ids(record, field):
+    """ Return an iterator over the ids of the cached values of a relational
+        field for the prefetch set of a record.
     """
-    __slots__ = ('_record', '_field')
-
-    def __init__(self, record, field):
-        self._record = record
-        self._field = field
-
-    def __iter__(self):
-        record = self._record
-        records = record.browse(record._prefetch_ids)
-        return unique(
-            id_
-            for ids in record.env.cache.get_values(records, self._field, ())
-            for id_ in ids
-        )
+    records = record.browse(record._prefetch_ids)
+    ids_seq = record.env.cache.get_values(records, field, ())
+    return unique(id_ for ids in ids_seq for id_ in ids)
 
 
 # imported here to avoid dependency cycle issues
