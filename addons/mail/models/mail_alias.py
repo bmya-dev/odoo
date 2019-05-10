@@ -30,9 +30,6 @@ class Alias(models.Model):
     _rec_name = 'alias_name'
     _order = 'alias_model_id, alias_name'
 
-    # user can write only some fields as it's technical model.
-    ALIAS_WRITEABLE_FIELDS = ['alias_name', 'alias_parent_thread_id', 'alias_force_thread_id', 'alias_defaults']
-
     alias_name = fields.Char('Alias Name', help="The name of the email alias, e.g. 'jobs' if you want to catch emails for <jobs@example.odoo.com>")
     alias_model_id = fields.Many2one('ir.model', 'Aliased Model', required=True, ondelete="cascade",
                                      help="The model (Odoo Document Kind) to which this alias "
@@ -121,8 +118,6 @@ class Alias(models.Model):
         """"give a unique alias name if given alias name is already assigned"""
         if vals.get('alias_name') and self.ids:
             vals['alias_name'] = self._clean_and_make_unique(vals.get('alias_name'), alias_ids=self.ids)
-        if vals and all(key in self.ALIAS_WRITEABLE_FIELDS for key in list(vals)):
-            return super(Alias, self.sudo()).write(vals)
         return super(Alias, self).write(vals)
 
     @api.multi
@@ -199,6 +194,9 @@ class AliasMixin(models.AbstractModel):
     _inherits = {'mail.alias': 'alias_id'}
     _description = 'Email Aliases Mixin'
 
+        # user can write only some fields as it's technical model.
+    ALIAS_WRITEABLE_FIELDS = ['alias_name', 'alias_parent_thread_id', 'alias_force_thread_id', 'alias_defaults']
+
     alias_id = fields.Many2one('mail.alias', string='Alias', ondelete="restrict", required=True)
 
     def get_alias_model_name(self, vals):
@@ -224,6 +222,17 @@ class AliasMixin(models.AbstractModel):
         )).create(vals)
         record.alias_id.sudo().write(record.get_alias_values())
         return record
+
+    @api.model
+    def write(self, vals):
+        if vals and all(key in self.ALIAS_WRITEABLE_FIELDS for key in list(vals)):
+            try:
+                self.check_access_rights('write')
+            except AccessError:
+                pass
+            else:
+                return super(AliasMixin, self.sudo()).write(vals)
+        return super(AliasMixin, self).write(vals)
 
     @api.multi
     def unlink(self):
