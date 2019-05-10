@@ -98,11 +98,11 @@ class ResConfigSettings(models.TransientModel):
     def change_report_template(self):
         company = self.env.user.company_id
         wizard = self.env['base.document.layout'].create({'company_id': company.id})
-        view_id = self.env.ref('base.view_company_document_template_form').id
-
+        view_id = self.env.ref('base.view_base_document_layout').id
+        
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Choose Your Document Layout'),
+            'name': _('Configure your document layout'),
             'view_mode': 'form',
             'res_model': 'base.document.layout',
             'res_id': wizard.id,

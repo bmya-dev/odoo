@@ -3028,9 +3028,9 @@ var FieldColor = AbstractField.extend({
     * @private
     * @override
     */
-    init: function (parent, options) {
+    init: function (parent) {
         this._super.apply(this, arguments);
-        this.defaultColor='#000000'
+        this.defaultColor = '#000000'
     },
 
     //--------------------------------------------------------------------------

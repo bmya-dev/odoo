@@ -16,7 +16,7 @@ class BaseDocumentLayout(models.TransientModel):
     _name = 'base.document.layout'
     _description = 'Company Document Layout'
 
-    company_id = fields.Many2one('res.company')
+    company_id = fields.Many2one('res.company', required=True)
 
     logo = fields.Binary(related='company_id.logo', readonly=False)
     preview_logo = fields.Binary(related='logo', readonly=False)

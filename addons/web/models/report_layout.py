@@ -14,6 +14,8 @@ class View(models.Model):
     _description = 'Report Layout'
 
     view_id = fields.Many2one('ir.ui.view', 'Document Template', required=True)
+    image = fields.Char(string="Preview image src")
+    pdf = fields.Char(string="Preview pdf src")
 
     name = fields.Char()
     primary_color = fields.Char(string="Default primary color")

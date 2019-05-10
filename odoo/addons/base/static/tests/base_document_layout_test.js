@@ -10,7 +10,7 @@ odoo.define('base.tour_test_base_document_layout', function (require) {
         {
             content: 'Click on "Configure Document Layout"',
             trigger: 'a.btn:contains("Configure Document Layout")',
-            //run: "ABCD" || foobar()
+            //run: "ABCD" || function() {foobar();}
         },
     ]);
 });
