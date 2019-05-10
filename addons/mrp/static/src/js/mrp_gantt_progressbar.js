@@ -23,6 +23,19 @@ odoo.define('mrp.mrp_gantt_progressbar', function (require) {
          */
         _renderRows: function(rows, groupedBy) {
             var self = this;
+            if (groupedBy == 'workcenter_id') {
+                rows.forEach(function (row) { 
+                    row.records = _.each(row.records, function(rec){
+                        var color =rec.color;
+                        if (rec.state == 'progress') {
+                            rec.color = 11;
+                        }
+                        if (rec.duration == '100') {
+                            rec.color = color;
+                        }
+                    });
+                });
+            }
             rows.forEach(function (row) {
                 row.records = _.filter(row.records, function (rec) {
                     rec.DurationPopover = true;
