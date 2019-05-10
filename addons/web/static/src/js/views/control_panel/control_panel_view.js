@@ -82,6 +82,7 @@ var ControlPanelView = Factory.extend({
         this.rendererParams.context = context;
         this.rendererParams.searchMenuTypes = params.searchMenuTypes || [];
         this.rendererParams.template = params.template;
+        this.rendererParams.title = params.title;
         this.rendererParams.withBreadcrumbs = params.withBreadcrumbs !== false;
         this.rendererParams.withSearchBar = 'withSearchBar' in params ? params.withSearchBar : true;
 
