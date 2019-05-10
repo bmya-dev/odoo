@@ -118,7 +118,15 @@ class SendSMS(models.TransientModel):
         for record in self:
             model = self.env['ir.model']._get(record.model or 'mail.message')
             model_name = model.name or ''
-            record_name = record.recipient_ids and record.recipient_ids[0].partner_id and record.recipient_ids[0].partner_id.display_name or 'New Template'
+            record_name = False
+            if record.composition_mode == 'mass_sms':
+                active_model = self.env.context.get('active_model')
+                model = self.env[active_model]
+                records = self._get_records(model)
+                recipients = self.env['sms.sms']._get_sms_recipients(active_model, records and records[0].id)
+                record_name = recipients and recipients[0]['partner_id'] and recipients[0]['partner_id'].display_name or 'New Template'
+            else:
+                record_name = record.recipient_ids and record.recipient_ids[0].partner_id and record.recipient_ids[0].partner_id.display_name or 'New Template'
             template_name = "%s: %s" % (model_name, record_name)
             values = {
                 'name': template_name,
