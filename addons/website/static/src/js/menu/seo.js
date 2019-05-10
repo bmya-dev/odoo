@@ -724,12 +724,24 @@ var SeoConfigurator = Dialog.extend({
         } else {
             return {
                 model: m[1],
-                id: m[2]|0
+                id: m[2] | 0,
+            };
+        }
+    },
+    getSeoObject: function () {
+        var repr = $('html').data('seo-object');
+        var m = repr && repr.match(/(.+)\((\d+),(.*)\)/);
+        if (!m) {
+            return null;
+        } else {
+            return {
+                model: m[1],
+                id: m[2] | 0,
             };
         }
     },
     loadMetaData: function () {
-        var obj = this.getMainObject();
+        var obj = this.getSeoObject() || this.getMainObject();
         var def = $.Deferred();
         if (!obj) {
             // return $.Deferred().reject(new Error("No main_object was found."));
@@ -737,7 +749,7 @@ var SeoConfigurator = Dialog.extend({
         } else {
             var fields = ['website_meta_title', 'website_meta_description', 'website_meta_keywords'
                             ,'website_meta_og_img'];
-            if (obj.model === 'website.page'){
+            if (obj.model === 'website.page') {
                 fields.push('website_indexed');
                 fields.push('website_id');
             }
@@ -760,7 +772,7 @@ var SeoConfigurator = Dialog.extend({
         return def;
     },
     saveMetaData: function (data) {
-        var obj = this.getMainObject();
+        var obj = this.getSeoObject() || this.getMainObject();
         if (!obj) {
             return $.Deferred().reject();
         } else {

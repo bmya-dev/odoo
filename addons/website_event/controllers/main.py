@@ -154,6 +154,9 @@ class WebsiteEventController(http.Controller):
         if '.' not in page:
             page = 'website_event.%s' % page
 
+        # Every event page view should have it's own SEO
+        values['seo_object'] = request.website.viewref(page)
+
         try:
             request.website.get_template(page)
         except ValueError:
