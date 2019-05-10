@@ -16,6 +16,7 @@ class StockProductionLot(models.Model):
     alert_date = fields.Datetime(string='Alert Date',
         help='Date to determine the expired lots and serial numbers using the filter "Expiration Alerts".')
     product_expiry_alert = fields.Boolean(compute='_compute_product_expiry_alert', help="The Alert Date has been reached.")
+    product_expiry_reminded = fields.Boolean(string="Expiry has been reminded", default=False)
 
     @api.depends('alert_date')
     def _compute_product_expiry_alert(self):
@@ -59,30 +60,29 @@ class StockProductionLot(models.Model):
     @api.model
     def _alert_date_exceeded(self):
         # if the alert_date is in the past and the lot is linked to an internal quant
-        # log a next activity on the next.production.lot 
-        alert_lot_ids = self.env['stock.production.lot'].search([('alert_date', '<=', fields.Date.today())])
-        mail_activity_type = self.env.ref('product_expiry.mail_activity_type_alert_date_reached').id
-        stock_quants = self.env['stock.quant'].search([
-            ('lot_id', 'in', alert_lot_ids.ids),
-            ('quantity', '>', 0)]).filtered(lambda quant: quant.location_id.usage == 'internal' )
-        lots = stock_quants.mapped('lot_id')
+        # log an activity on the stock.production.lot
+        """alert_lots = self.env['stock.production.lot'].search([
+            ('alert_date', '<=', fields.Date.today()),
+            ('product_expiry_reminded', '=', False)])"""
 
-        # only for lots that do not have already an activity
-        # or that do not have a done alert activity, i.e. a mail.message
-        lots = lots.filtered(lambda lot: 
-            not self.env['mail.activity'].search_count([
-                ('res_model', '=', 'stock.production.lot'),
-                ('res_id', '=', lot.id),
-                ('activity_type_id','=', mail_activity_type)])
-            and not self.env['mail.message'].search_count([
-                ('model', '=', 'stock.production.lot'),
-                ('res_id', '=', lot.id),
-                ('subtype_id', '=', self.env.ref('mail.mt_activities').id),
-                ('mail_activity_type_id','=', mail_activity_type)]))
-        for lot in lots:
-            lot.activity_schedule('product_expiry.mail_activity_type_alert_date_reached',
-            user_id=lot.product_id.responsible_id.id or SUPERUSER_ID, note=_("The alert date has been reached for this lot/serial number")
-        )
+        lot_stock_quants = self.env['stock.quant'].search([
+            # ('lot_id', 'in', alert_lots.ids),
+            ('lot_id.alert_date', '<=', fields.Date.today()),
+            ('lot_id.product_expiry_reminded', '=', False),
+            ('quantity', '>', 0),
+            ('location_id.usage', '=', 'internal')])
+        alert_lots = lot_stock_quants.mapped('lot_id')
+
+        for lot in alert_lots:
+            lot.activity_schedule(
+                'product_expiry.mail_activity_type_alert_date_reached',
+                user_id=lot.product_id.responsible_id.id or SUPERUSER_ID,
+                note=_("The alert date has been reached for this lot/serial number")
+            )
+        alert_lots.write({
+            'product_expiry_reminded': True
+        })
+
 
 class ProcurementGroup(models.Model):
     _inherit = 'procurement.group'
