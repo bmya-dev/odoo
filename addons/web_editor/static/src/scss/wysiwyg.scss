@@ -290,7 +290,7 @@ body .modal {
             .o_existing_attachment_cell {
                 cursor: pointer;
 
-                &.o_selected {
+                &.o_selected, .o_selected {
                     border-color: $o-brand-primary;
                     box-shadow: 0px 0px 2px 2px $o-brand-primary;
                 }

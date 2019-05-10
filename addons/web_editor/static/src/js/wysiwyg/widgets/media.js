@@ -3,8 +3,10 @@ odoo.define('wysiwyg.widgets.media', function (require) {
 
 var core = require('web.core');
 var Dialog = require('web.Dialog');
+var dom = require('web.dom');
 var fonts = require('wysiwyg.fonts');
 var session = require('web.session');
+var utils = require('web.utils');
 var Widget = require('web.Widget');
 var concurrency = require('web.concurrency');
 
@@ -131,6 +133,8 @@ var FileWidget = SearchWidget.extend({
 
         this.attachments = [];
         this.selectedAttachments = [];
+
+        this._onUploadURLButtonClick = dom.makeAsyncHandler(this._onUploadURLButtonClick);
     },
     /**
      * @override
@@ -172,9 +176,9 @@ var FileWidget = SearchWidget.extend({
             o.id = +o.url.match(/\/web\/content\/(\d+)/, '')[1];
         }
         if (o.url) {
-            self._toggleImage(_.find(self.attachments, function (attachment) {
+            self._selectAttachement(_.find(self.attachments, function (attachment) {
                 return attachment.url === o.url;
-            }) || o, true);
+            }) || o);
         }
 
         return def;
@@ -206,18 +210,12 @@ var FileWidget = SearchWidget.extend({
             args: [],
             kwargs: {
                 domain: this._getAttachmentsDomain(needle),
-                fields: ['name', 'datas_fname', 'mimetype', 'checksum', 'url', 'type', 'res_id', 'res_model', 'access_token'],
+                fields: ['name', 'datas_fname', 'mimetype', 'checksum', 'url', 'type', 'res_id', 'res_model', 'access_token', 'image_src'],
                 order: [{name: 'id', asc: false}],
                 context: this.options.context,
             },
         }).then(function (attachments) {
             self.attachments = _.chain(attachments)
-                .filter(function (r) {
-                    return (r.type === "binary" || r.url && r.url.length > 0);
-                })
-                .uniq(function (r) {
-                    return (r.url || r.id);
-                })
                 .sortBy(function (r) {
                     if (_.any(self.options.firstFilters, function (filter) {
                         var regex = new RegExp(filter, 'i');
@@ -234,12 +232,6 @@ var FileWidget = SearchWidget.extend({
                     return 0;
                 })
                 .value();
-
-            _.each(self.attachments, function (attachment) {
-                // Name is added for SEO purposes
-                attachment.src = attachment.url || _.str.sprintf('/web/image/%s/%s', attachment.id, encodeURI(attachment.name));
-                attachment.isDocument = !(/gif|jpe|jpg|png/.test(attachment.mimetype));
-            });
             if (!noRender) {
                 self._renderImages();
             }
@@ -309,6 +301,7 @@ var FileWidget = SearchWidget.extend({
             domain.push('|', ['datas_fname', 'ilike', needle], ['name', 'ilike', needle]);
         }
         domain.push('|', ['datas_fname', '=', false], '!', ['datas_fname', '=like', '%.crop'], '!', ['name', '=like', '%.crop']);
+        domain.push('|', ['type', '=', 'binary'], ['url', '!=', false]);
         return domain;
     },
     /**
@@ -324,22 +317,27 @@ var FileWidget = SearchWidget.extend({
     /**
      * @private
      */
-    _highlightSelected: function () {
-        var self = this;
-        this.$('.o_existing_attachment_cell.o_selected').removeClass("o_selected");
-        _.each(this.selectedAttachments, function (attachment) {
-            self.$('.o_existing_attachment_cell[data-id=' + attachment.id + ']').addClass("o_selected");
-        });
+    _handleNewAttachment: function (attachment) {
+        this.attachments.unshift(attachment);
+        this._renderImages();
+        this._selectAttachement(attachment, !this.options.multiImages);
     },
     /**
+     * @abstract
      * @private
+     */
+    _highlightSelected: function () {},
+    /**
+     * @private
+     * @returns {Promise}
      */
     _loadMoreImages: function (forceSearch) {
         this.attachmentRows += 2;
         if (!forceSearch) {
             this._renderImages();
+            return Promise.resolve();
         } else {
-            this.search(this.$('.o_we_search').val() || '');
+            return this.search(this.$('.o_we_search').val() || '');
         }
     },
     /**
@@ -356,8 +354,6 @@ var FileWidget = SearchWidget.extend({
      */
     _renderImages: function (withEffect) {
         var attachments = _(this.attachments).slice(0, this._getNumberOfAttachmentsToDisplay());
-
-        this.$errorText.empty();
 
         // Render menu & content
         this.$('.existing-attachments').replaceWith(
@@ -382,7 +378,7 @@ var FileWidget = SearchWidget.extend({
         }
 
         var img = this.selectedAttachments[0];
-        if (!img) {
+        if (!img || !img.id) {
             return Promise.resolve(this.media);
         }
 
@@ -398,10 +394,7 @@ var FileWidget = SearchWidget.extend({
         }
 
         return Promise.resolve(prom).then(function () {
-            if (!img.isDocument) {
-                if (img.access_token && self.options.res_model !== 'ir.ui.view') {
-                    img.src += _.str.sprintf('?access_token=%s', img.access_token);
-                }
+            if (img.image_src) {
                 if (!self.$media.is('img')) {
                     // Note: by default the images receive the bootstrap opt-in
                     // img-fluid class. We cannot make them all responsive
@@ -409,8 +402,7 @@ var FileWidget = SearchWidget.extend({
                     self.$media = $('<img/>', {class: 'img-fluid o_we_custom_image'});
                     self.media = self.$media[0];
                 }
-                self.$media.attr('src', img.src);
-
+                self.$media.attr('src', img.image_src);
             } else {
                 if (!self.$media.is('a')) {
                     $('.note-control-selection').hide();
@@ -446,17 +438,17 @@ var FileWidget = SearchWidget.extend({
     /**
      * @private
      */
-    _toggleImage: function (attachment, doubleClick) {
+    _selectAttachement: function (attachment, save) {
         if (this.options.multiImages) {
-            // if the clicked image is already selected, then unselect it
-            // unless it was a double click
+            // if the clicked image is already selected then unselect it
+            // unless it was a save request (then keep the current selection)
             var index = this.selectedAttachments.indexOf(attachment);
             if (index !== -1) {
-                if (!doubleClick) {
+                if (!save) {
                     this.selectedAttachments.splice(index, 1);
                 }
             } else {
-                // if the clicked image is not selected, then select it
+                // if the clicked image is not selected, add it to selection
                 this.selectedAttachments.push(attachment);
             }
         } else {
@@ -464,6 +456,9 @@ var FileWidget = SearchWidget.extend({
             this.selectedAttachments = [attachment];
         }
         this._highlightSelected();
+        if (save) {
+            this.trigger_up('save_request');
+        }
     },
     /**
      * Updates the add by URL UI.
@@ -481,73 +476,6 @@ var FileWidget = SearchWidget.extend({
         this.$urlSuccess.toggleClass('d-none', !isURL);
         this.$urlError.toggleClass('d-none', emptyValue || isURL);
     },
-    /**
-     * @private
-     */
-    _uploadFile: function () {
-        return this._mutex.exec(this._uploadImageIframe.bind(this));
-    },
-    /**
-     * @returns {Promise}
-     */
-    _uploadImageIframe: function () {
-        var self = this;
-        return new Promise(function (resolve) {
-
-            /**
-             * @todo file upload cannot be handled with _rpc smoothly. This uses the
-             * form posting in iframe trick to handle the upload.
-             */
-            var $iframe = self.$('iframe');
-            $iframe.on('load', function () {
-                var iWindow = $iframe[0].contentWindow;
-
-                var attachments = iWindow.attachments || [];
-                var error = iWindow.error;
-
-                self.$('.well > span').remove();
-                self.$('.well > div').show();
-                _.each(attachments, function (attachment) {
-                    // Name is added for SEO purposes
-                    attachment.src = attachment.url || _.str.sprintf('/web/image/%s/%s', attachment.id, encodeURI(attachment.name));
-                    attachment.isDocument = !(/gif|jpe|jpg|png/.test(attachment.mimetype));
-                });
-                if (error || !attachments.length) {
-                    _processFile(null, error || !attachments.length);
-                }
-                self.attachments = attachments;
-                for (var i = 0 ; i < attachments.length ; i++) {
-                    _processFile(attachments[i], error);
-                }
-
-                if (self.options.onUpload) {
-                    self.options.onUpload(attachments);
-                }
-
-                resolve();
-
-                function _processFile(attachment, error) {
-                    var $button = self.$uploadButton;
-                    if (!error) {
-                        $button.addClass('btn-success');
-                        self._toggleImage(attachment, true);
-                    } else {
-                        $button.addClass('btn-danger');
-                        self.$el.addClass('o_has_error').find('.form-control, .custom-select').addClass('is-invalid');
-                        self.$errorText.text(error);
-                    }
-
-                    if (!self.options.multiImages) {
-                        self.trigger_up('save_request');
-                    }
-                }
-            });
-            self.$el.submit();
-
-            self.$fileInput.val('');
-        });
-    },
-
 
     //--------------------------------------------------------------------------
     // Handlers
@@ -556,36 +484,60 @@ var FileWidget = SearchWidget.extend({
     /**
      * @private
      */
-    _onAttachmentClick: function (ev, doubleClick) {
+    _onAttachmentClick: function (ev, save) {
         var $attachment = $(ev.currentTarget);
         var attachment = _.find(this.attachments, {id: $attachment.data('id')});
-        this._toggleImage(attachment, doubleClick);
+        this._selectAttachement(attachment, save);
     },
     /**
      * @private
      */
     _onAttachmentDblClick: function (ev) {
         this._onAttachmentClick(ev, true);
-        this.trigger_up('save_request');
     },
     /**
      * @private
+     * @returns {Promise}
      */
     _onFileInputChange: function () {
-        this.$el.addClass('nosave');
-        this.$form.removeClass('o_has_error').find('.form-control, .custom-select').removeClass('is-invalid');
-        this.$errorText.empty();
-        this.$uploadButton.removeClass('btn-danger btn-success');
-        this._uploadFile();
+        var self = this;
+        var uploadMutex = new concurrency.Mutex();
+
+        var files = _.sortBy(this.$fileInput[0].files, 'size');
+
+        var promises = [];
+
+        _.each(files, function (file) {
+            // upload one file at a time
+            var promiseUpload = uploadMutex.exec(function () {
+                utils.getDataURLFromFile(file).then(function (result) {
+                    return self._rpc({
+                        route: '/web_editor/attachment/add_datas',
+                        params: {
+                            'filename': file.name,
+                            'datas': result.split(',')[1],
+                            'res_id': self.options.res_id,
+                            'res_model': self.options.res_model,
+                            'filters': self.options.firstFilters.join('_'),
+                        },
+                    }).then(function (attachment) {
+                        self._handleNewAttachment(attachment);
+                    });
+                });
+            });
+
+            promises.push(promiseUpload);
+        });
+        return Promise.all(promises);
     },
     /**
      * @private
      */
     _onRemoveClick: function (ev) {
         var self = this;
+        ev.stopPropagation();
         Dialog.confirm(this, _t("Are you sure you want to delete this file ?"), {
             confirm_callback: function () {
-                var $helpBlock = self.$errorText.empty();
                 var $a = $(ev.currentTarget);
                 var id = parseInt($a.data('id'), 10);
                 var attachment = _.findWhere(self.attachments, {id: id});
@@ -597,10 +549,10 @@ var FileWidget = SearchWidget.extend({
                 }).then(function (prevented) {
                     if (_.isEmpty(prevented)) {
                         self.attachments = _.without(self.attachments, attachment);
-                        self._renderImages();
+                        $a.closest('.o_existing_attachment_cell').remove();
                         return;
                     }
-                    $helpBlock.replaceWith(QWeb.render('wysiwyg.widgets.image.existing.error', {
+                    self.$errorText.replaceWith(QWeb.render('wysiwyg.widgets.image.existing.error', {
                         views: prevented[id],
                     }));
                 });
@@ -610,10 +562,8 @@ var FileWidget = SearchWidget.extend({
     /**
      * @private
      */
-    _onURLInputChange: function (ev) {
-        var $input = $(ev.currentTarget);
-
-        var inputValue = $input.val();
+    _onURLInputChange: function () {
+        var inputValue = this.$urlInput.val();
         var emptyValue = (inputValue === '');
 
         var isURL = /^.+\..+$/.test(inputValue); // TODO improve
@@ -640,7 +590,19 @@ var FileWidget = SearchWidget.extend({
      * @private
      */
     _onUploadURLButtonClick: function () {
-        this._uploadFile();
+        var self = this;
+        return this._rpc({
+            route: '/web_editor/attachment/add_url',
+            params: {
+                'url': this.$urlInput.val(),
+                'res_id': this.options.res_id,
+                'res_model': this.options.res_model,
+                'filters': this.options.firstFilters.join('_'),
+            },
+        }).then(function (attachment) {
+            self.$urlInput.val('').trigger('input');
+            self._handleNewAttachment(attachment);
+        });
     },
     /**
      * @private
@@ -664,7 +626,7 @@ var ImageWidget = FileWidget.extend({
         this._super.apply(this, [parent, media, _.extend({}, options, {
             accept: options.accept || 'image/*',
             mimetypeDomain: options.mimetypeDomain || ['mimetype', 'in',
-                ['image/gif', 'image/jpe', 'image/jpeg', 'image/jpg', 'image/gif', 'image/png']
+                ['image/gif', 'image/jpe', 'image/jpeg', 'image/jpg', 'image/gif', 'image/png', 'image/svg+xml', 'image/x-icon']
             ],
         })]);
     },
@@ -673,6 +635,16 @@ var ImageWidget = FileWidget.extend({
     // Private
     //--------------------------------------------------------------------------
 
+    /**
+     * @override
+     */
+    _highlightSelected: function () {
+        var self = this;
+        this.$('.o_existing_attachment_cell .card.o_selected').removeClass("o_selected");
+        _.each(this.selectedAttachments, function (attachment) {
+            self.$('.o_existing_attachment_cell[data-id=' + attachment.id + '] .card').addClass("o_selected");
+        });
+    },
     /**
      * @override
      */
@@ -707,7 +679,7 @@ var DocumentWidget = FileWidget.extend({
         this._super.apply(this, [parent, media, _.extend({}, options, {
             accept: options.accept || '*/*',
             mimetypeDomain: options.mimetypeDomain || ['mimetype', 'not in',
-                ['image/gif', 'image/jpe', 'image/jpeg', 'image/jpg', 'image/gif', 'image/png']
+                ['image/gif', 'image/jpe', 'image/jpeg', 'image/jpg', 'image/gif', 'image/png', 'image/svg+xml', 'image/x-icon']
             ],
         })]);
     },
@@ -716,6 +688,16 @@ var DocumentWidget = FileWidget.extend({
     // Private
     //--------------------------------------------------------------------------
 
+    /**
+     * @override
+     */
+    _highlightSelected: function () {
+        var self = this;
+        this.$('.o_existing_attachment_cell.o_selected').removeClass("o_selected");
+        _.each(this.selectedAttachments, function (attachment) {
+            self.$('.o_existing_attachment_cell[data-id=' + attachment.id + ']').addClass("o_selected");
+        });
+    },
     /**
      * @override
      */

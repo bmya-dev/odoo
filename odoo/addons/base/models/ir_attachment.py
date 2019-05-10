@@ -9,10 +9,11 @@ import os
 import re
 from collections import defaultdict
 import uuid
+from werkzeug import url_quote
 
 from odoo import api, fields, models, tools, SUPERUSER_ID, _
 from odoo.exceptions import AccessError, ValidationError
-from odoo.tools import config, human_size, ustr, html_escape
+from odoo.tools import config, human_size
 from odoo.tools.mimetypes import guess_mimetype
 
 _logger = logging.getLogger(__name__)
@@ -155,7 +156,7 @@ class IrAttachment(models.Model):
 
         # retrieve the file names from the checklist
         checklist = {}
-        for dirpath, _, filenames in os.walk(self._full_path('checklist')):
+        for dirpath, dirs, filenames in os.walk(self._full_path('checklist')):
             dirname = os.path.basename(dirpath)
             for filename in filenames:
                 fname = "%s/%s" % (dirname, filename)
@@ -274,6 +275,37 @@ class IrAttachment(models.Model):
         """
         return ['base.group_system']
 
+    @api.multi
+    def _get_media_info(self):
+        """Return a dict with the values that we need on the media dialog."""
+        self.ensure_one()
+        return self.read(['id', 'name', 'mimetype', 'checksum', 'url', 'res_id', 'res_model', 'access_token', 'image_width', 'image_height', 'image_src'])[0]
+
+    @api.depends('datas')
+    @api.multi
+    def _compute_image_size(self):
+        for attachment in self:
+            try:
+                image = tools.base64_to_image(attachment.datas)
+                attachment.width = image.size[0]
+                attachment.height = image.size[1]
+            except Exception:
+                attachment.width = 0
+                attachment.height = 0
+
+    @api.depends('mimetype', 'url', 'name', 'datas_fname', 'access_token', 'res_model')
+    @api.multi
+    def _compute_image_src(self):
+        for attachment in self:
+            if not any(m == attachment.mimetype for m in ['image/gif', 'image/jpe', 'image/jpeg', 'image/jpg', 'image/gif', 'image/png', 'image/svg+xml', 'image/x-icon']):
+                attachment.image_src = False
+            else:
+                attachment.image_src = attachment.url or '/web/image/%s/%s%s' % (
+                    attachment.id,
+                    url_quote(attachment.datas_fname or attachment.name or ''),
+                    ('?access_token=%s' % attachment.access_token) if attachment.access_token and attachment.res_model != 'ir.ui.view' else '',
+                )
+
     name = fields.Char('Name', required=True)
     datas_fname = fields.Char('Filename')
     description = fields.Text('Description')
@@ -300,6 +332,9 @@ class IrAttachment(models.Model):
     checksum = fields.Char("Checksum/SHA1", size=40, index=True, readonly=True)
     mimetype = fields.Char('Mime Type', readonly=True)
     index_content = fields.Text('Indexed Content', readonly=True, prefetch=False)
+    image_width = fields.Integer(compute='_compute_image_size')
+    image_height = fields.Integer(compute='_compute_image_size')
+    image_src = fields.Char(compute='_compute_image_src')
 
     @api.model_cr_context
     def _auto_init(self):
