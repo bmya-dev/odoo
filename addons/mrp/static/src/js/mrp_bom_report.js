@@ -121,7 +121,6 @@ var MrpBomReport = stock_report_generic.extend({
         });
         framework.blockUI();
         var reportname = 'mrp.report_bom_structure?docids=' + this.given_context.active_id +
-                         '&report_type=' + this.given_context.report_type +
                          '&quantity=' + (this.given_context.searchQty || 1);
         if (! $(ev.currentTarget).hasClass('o_mrp_bom_print_unfolded')) {
             reportname += '&childs=' + JSON.stringify(childBomIDs);
