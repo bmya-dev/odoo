@@ -20,7 +20,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
 
     def test_in_refund_line_onchange_account_1(self):
         # One product line, custom account.
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -243,7 +243,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
         ])
 
     def test_in_refund_line_onchange_product_1(self):
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -478,7 +478,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
 
     def test_in_refund_line_onchange_quantity_1(self):
         # One product line, custom quantity.
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -598,7 +598,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
 
     def test_in_refund_line_onchange_quantity_2(self):
         # One product line, custom quantity.
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -718,7 +718,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
 
     def test_in_refund_line_onchange_price_unit_1(self):
         # One product line, custom price_unit.
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -955,7 +955,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
 
     def test_in_refund_line_onchange_discount_1(self):
         # One product line having 50% discount.
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -1404,7 +1404,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
         }])
 
     def test_in_refund_line_onchange_uom_1(self):
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -1524,7 +1524,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
 
     def test_in_refund_line_onchange_taxes_1_stackable_amounts(self):
         # One product line with two taxes: 15% tax + 15% tax.
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -2352,7 +2352,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
         }])
 
     def test_in_refund_line_onchange_taxes_2_price_include(self):
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -2473,7 +2473,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
         }])
 
     def test_in_refund_line_onchange_taxes_3_exigibility_on_payment(self):
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -2593,7 +2593,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
         }])
 
     def test_in_refund_onchange_payment_term_1(self):
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -2992,7 +2992,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
         }])
 
     def test_in_refund_onchange_amls_1(self):
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -3160,7 +3160,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
         }])
 
     def test_in_refund_onchange_partner_1(self):
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_b
         with move_form.invoice_line_ids.new() as line_form:
@@ -3303,7 +3303,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
     def test_in_refund_onchange_fiscal_position_1_applied_after(self):
         # Create a new invoice with a single product line.
         # The fiscal position is applied at the end so the accounts remains untouched.
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -3424,7 +3424,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
     def test_in_refund_onchange_fiscal_position_2_applied_before(self):
         # Create a new invoice with a single product line.
         # The fiscal position is applied at the beginning so the accounts/taxes are mapped.
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         move_form.fiscal_position_id = self.parent_fp_1
@@ -3558,7 +3558,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
         })
 
         # Create the invoice with one line.
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -3865,7 +3865,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
 
     def test_in_refund_onchange_journal_1(self):
         ''' Set a custom journal having a foreign currency. '''
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -4101,7 +4101,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
     def test_in_refund_onchange_currency_1(self):
         # Create an invoice with a single product line.
         # Set a foreign currency at the end: the product price remains unchanged.
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -4497,7 +4497,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
         }])
 
     def test_in_refund_onchange_invoice_sequence_number_1(self):
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -4522,7 +4522,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
 
         self.assertRecordValues(move, [{'name': 'BILL/2019/0042'}])
 
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -4533,7 +4533,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
         self.assertRecordValues(move, [{'name': 'BILL/2019/0043'}])
 
     def test_in_refund_onchange_past_invoice_1(self):
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         move_form.invoice_payment_term_id = self.pay_terms_advance
@@ -4542,7 +4542,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
             line_form.product_id = self.product_a
         old_move = move_form.save()
 
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         move_form.invoice_vendor_bill_id = old_move
@@ -4687,7 +4687,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
 
     def test_in_refund_create_invoice_line_ids_1_single_currency(self):
         # Test creating an account_move with the least information.
-        move = self.env['account.move'].with_context(type='in_refund').create({
+        move = self.env['account.move'].with_context(default_type='in_refund').create({
             'type': 'in_refund',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2019-01-01'),
@@ -4814,7 +4814,7 @@ class TestAccountMoveInRefund(AccountingSavepointCase):
 
     def test_in_refund_create_invoice_line_ids_2_multi_currency(self):
         # Test creating an account_move with the least information.
-        move = self.env['account.move'].with_context(type='in_refund').create({
+        move = self.env['account.move'].with_context(default_type='in_refund').create({
             'type': 'in_refund',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2016-01-01'),
