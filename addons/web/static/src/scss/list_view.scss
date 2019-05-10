@@ -34,12 +34,16 @@
                     padding-right: 5px;
                 }
             }
-            .o_advanced_column_dropdown .dropdown-item {
-                input {
-                    vertical-align: middle;
-                }
-                label {
-                    padding-left: 10px;
+            .o_advanced_column_dropdown {
+                top: 20px !important;
+                .dropdown-item {
+                    input {
+                        vertical-align: middle;
+                    }
+                    label {
+                        padding-left: 10px;
+                        width: 100%;
+                    }
                 }
             }
         }

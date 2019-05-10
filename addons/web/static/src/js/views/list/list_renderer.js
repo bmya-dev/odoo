@@ -325,7 +325,7 @@ var ListRenderer = BasicRenderer.extend({
             class: 'o_advanced_column text-center dropdown',
         });
         var $a = $("<a>", {
-            class: "dropdown-toggle text-dark",
+            class: "dropdown-toggle text-dark o-no-caret",
             href: "#",
             role: "button",
             'data-toggle': "dropdown",
@@ -335,6 +335,7 @@ var ListRenderer = BasicRenderer.extend({
 
         var $dropdown = $("<div>", {
             class: 'dropdown-menu dropdown-menu-right o_advanced_column_dropdown',
+            role: 'menu',
         });
         _.map(this.advancedColumns, function (col) {
             var txt = (col.attrs.string || self.state.fields[col.attrs.name].string) +
