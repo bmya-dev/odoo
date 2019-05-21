@@ -10,10 +10,13 @@ class ResCompany(models.Model):
         related='partner_id.l10n_cl_identification_type_id',
         readonly=False,
     )
-    l10n_ar_cuit = fields.Char(
+    l10n_cl_rut = fields.Char(
+        related='partner_id.l10n_cl_rut',
+    )
+    l10n_cl_rut_dv = fields.Char(
         related='partner_id.l10n_cl_rut_dv',
     )
-
+    
     @api.multi
     def validate_rut(self):
         return self.partner_id.validate_rut()
