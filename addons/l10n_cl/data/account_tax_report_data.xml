@@ -37,7 +37,7 @@
     </record>
 
     <record id="tax_report_impuesto_general_pag_exon" model="account.tax.report.line">
-        <field name="name">Impuesto Pagado de Exonerados al IVA</field>
+        <field name="name">Impuesto Pagado de No Afectos al IVA</field>
         <field name="sequence" eval="2"/>
         <field name="parent_id" ref="tax_report_impuesto_general_pag"/>
         <field name="country_id" ref="base.cl"/>
@@ -66,7 +66,7 @@
     </record>
 
     <record id="tax_report_impuesto_general_cobrado_exon" model="account.tax.report.line">
-        <field name="name">Impuesto Cobrado de Exonerados al IVA</field>
+        <field name="name">Impuesto Cobrado a No Afectos al IVA</field>
         <field name="sequence" eval="2"/>
         <field name="parent_id" ref="tax_report_impuesto_general_cobrado"/>
         <field name="country_id" ref="base.cl"/>
@@ -101,7 +101,7 @@
     </record>
 
     <record id="tax_report_base_imponible_ventas_no_grav" model="account.tax.report.line">
-        <field name="name">Ventas NO Gravadas (Exoneradas)</field>
+        <field name="name">Ventas NO Gravadas (Exentas)</field>
         <field name="sequence" eval="2"/>
         <field name="parent_id" ref="tax_report_base_imponible_ventas"/>
         <field name="country_id" ref="base.cl"/>
@@ -130,7 +130,7 @@
     </record>
 
     <record id="tax_report_base_imponible_compras_no_grav" model="account.tax.report.line">
-        <field name="name">Compras NO Gravadas (Exoneradas)</field>
+        <field name="name">Compras NO Gravadas (Exentas)</field>
         <field name="sequence" eval="2"/>
         <field name="parent_id" ref="tax_report_base_imponible_compras"/>
         <field name="country_id" ref="base.cl"/>
