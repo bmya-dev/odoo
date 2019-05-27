@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+    <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <menuitem id="account_reports_cl_statements_menu" name="Chile" parent="account.menu_finance_reports" sequence="0" groups="account.group_account_user"/>
 
@@ -14,6 +14,7 @@
         <field name="transfer_account_code_prefix">117</field>
         <field name="code_digits">6</field>
         <field name="currency_id" ref="base.CLP"/>
+        <field name="use_anglo_saxon" eval="True" />
     </record>
 
     <record id="transfer_account_id" model="account.account.template">

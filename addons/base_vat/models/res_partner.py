@@ -63,7 +63,6 @@ _ref_vat = {
     'be': 'BE0477472701',
     'bg': 'BG1234567892',
     'ch': 'CHE-123.456.788 TVA or CH TVA 123456',  # Swiss by Yannick Vaucher @ Camptocamp
-    'cl': '76201224-3', # Chile by Daniel Blanco & Blanco Martin & Asociados
     'cy': 'CY12345678F',
     'cz': 'CZ12345679',
     'de': 'DE123456788',
