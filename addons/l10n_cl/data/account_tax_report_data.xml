@@ -3,6 +3,7 @@
 
     <record id="tax_report_impuestos" model="account.tax.report.line">
         <field name="name">Impuestos Directos a Pagar</field>
+        <field name="tag_name">Impuestos Directos a Pagar</field>
         <field name="sequence" eval="1"/>
         <field name="country_id" ref="base.cl"/>
     </record>
@@ -140,6 +141,21 @@
         <field name="name">Compras Gravadas Fuera de Ámbito</field>
         <field name="sequence" eval="3"/>
         <field name="parent_id" ref="tax_report_base_imponible_compras"/>
+        <field name="country_id" ref="base.cl"/>
+    </record>
+
+    <record id="tax_report_fees_affected_to_withholding" model="account.tax.report.line">
+        <field name="name">Honorarios Afectos a Retención</field>
+        <field name="tag_name">Honorarios Afectos a Retención</field>
+        <field name="sequence" eval="5"/>
+        <field name="country_id" ref="base.cl"/>
+    </record>
+
+    <record id="tax_report_withholding_2" model="account.tax.report.line">
+        <field name="name">Impuestos retenidos segunda Categoría</field>
+        <field name="tag_name">Ret 2da Cat</field>
+        <field name="sequence" eval="6"/>
+        <field name="parent_id" ref="tax_report_impuestos"/>
         <field name="country_id" ref="base.cl"/>
     </record>
 

@@ -84,20 +84,6 @@ class ResPartner(models.Model):
                 rec.vat = module[0].format(rec.vat)
                 rec.l10n_cl_rut = '55555555-5'
             rec.l10n_cl_rut_dv = rec.l10n_cl_rut[-1:]
-            # commercial_partner = rec.commercial_partner_id
-            # if commercial_partner.country_id:
-            #     origin_country = commercial_partner.country_id.code.lower()
-            #     _logger.info('origin country: %s' % origin_country)
-            #     if origin_country == 'cl':
-            #         rec.vat = rec.vat.replace('.', '')
-            #         rec.l10n_cl_rut = rec.vat
-            #         rec.l10n_cl_rut_dv = rec.vat[-1:]
-            #     else:
-            #         rec.vat = module.format(rec.vat)
-            #         rec.l10n_cl_rut = '55555555-5'
-            #         rec.l10n_cl_rut_dv = '5'
-            # else:
-            #     pass
 
     @api.multi
     def validate_rut(self):
