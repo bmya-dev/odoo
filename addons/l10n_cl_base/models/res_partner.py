@@ -73,6 +73,9 @@ class ResPartner(models.Model):
         'res.country',
         default=lambda self: self.env.ref('base.cl'))
 
+    # comuna = fields.Char()
+    # region -> state
+
     @api.onchange('l10n_cl_county_id', 'city', 'state_id')
     def _change_city_province(self):
         if self.country_id != self.env.ref('base.cl'):
